@@ -22,12 +22,32 @@ def format_time(seconds):
     return f"{s}s"
 
 
+# ── Dark Theme Colors ──────────────────────────────────────────────
+DARK_COLORS = {
+    "bg":           "#1e1e2e",   # main background
+    "surface":      "#282840",   # frames, cards
+    "surface_alt":  "#313148",   # alternate surface (treeview rows)
+    "border":       "#3b3b56",   # subtle borders
+    "text":         "#cdd6f4",   # primary text
+    "text_dim":     "#8b8da8",   # secondary text
+    "accent":       "#7c7cf8",   # buttons, highlights
+    "accent_hover": "#9696ff",   # hover state
+    "green":        "#5cce8e",   # success / ready
+    "green_dim":    "#3a8a5e",   # darker green
+    "red":          "#e06070",   # stop / error
+    "yellow":       "#e0b860",   # warning
+    "blue":         "#6090e0",   # running
+    "purple":       "#b090e0",   # waiting
+}
+
+
 class OrchestratorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("TinyTask Orchestrator")
-        self.root.geometry("900x650")
-        self.root.minsize(750, 500)
+        self.root.geometry("750x500")
+        self.root.minsize(600, 380)
+        self.root.configure(bg=DARK_COLORS["bg"])
 
         # Estado
         config = load_config()
@@ -43,6 +63,9 @@ class OrchestratorApp:
         self.hotkey = HotkeyListener()
         self.hotkey.start(self.saved_hotkey, self._hotkey_toggle)
 
+        # Setup dark theme before building UI
+        self._setup_dark_theme()
+
         # Construir UI
         self._build_ui()
         self._refresh_list()
@@ -51,44 +74,147 @@ class OrchestratorApp:
         # Guardar al cerrar
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
-    def _build_ui(self):
-        # ===== Frame Configuración del Loop =====
-        loop_frame = ttk.LabelFrame(self.root, text=" Configuración del Loop ", padding=10)
-        loop_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
+    def _setup_dark_theme(self):
+        """Configure ttk styles for a compact dark theme (clam-based)."""
+        style = ttk.Style()
+        style.theme_use("clam")
 
-        ttk.Label(loop_frame, text="Modo:").pack(side=tk.LEFT, padx=(0, 5))
+        c = DARK_COLORS
+
+        # ── Global defaults ──
+        style.configure(".", background=c["bg"], foreground=c["text"],
+                        font=("Segoe UI", 9), borderwidth=0)
+
+        # ── Frame ──
+        style.configure("TFrame", background=c["bg"])
+        style.configure("Dark.TFrame", background=c["surface"])
+
+        # ── LabelFrame ──
+        style.configure("TLabelframe", background=c["bg"], foreground=c["text_dim"],
+                        bordercolor=c["border"], borderwidth=1, relief="solid")
+        style.configure("TLabelframe.Label", background=c["bg"], foreground=c["text_dim"],
+                        font=("Segoe UI", 9))
+
+        # ── Label ──
+        style.configure("TLabel", background=c["bg"], foreground=c["text"],
+                        font=("Segoe UI", 9))
+        style.configure("Dark.TLabel", background=c["surface"], foreground=c["text"],
+                        font=("Segoe UI", 9))
+        style.configure("Dim.TLabel", foreground=c["text_dim"], font=("Segoe UI", 9))
+        style.configure("Bold.TLabel", foreground=c["text"], font=("Segoe UI", 9, "bold"))
+
+        # ── Button ──
+        style.configure("TButton", background=c["accent"], foreground="#ffffff",
+                        borderwidth=0, focusthickness=0, relief="flat",
+                        padding=(8, 3), font=("Segoe UI", 9))
+        style.map("TButton",
+                  background=[("active", c["accent_hover"]),
+                              ("disabled", c["surface_alt"])],
+                  foreground=[("disabled", c["text_dim"])])
+
+        # ── Entry ──
+        style.configure("TEntry", fieldbackground=c["surface_alt"],
+                        foreground=c["text"], borderwidth=1,
+                        bordercolor=c["border"], relief="solid",
+                        padding=(4, 2), insertcolor=c["text"])
+
+        # ── Combobox ──
+        style.configure("TCombobox", fieldbackground=c["surface_alt"],
+                        background=c["surface_alt"], foreground=c["text"],
+                        arrowcolor=c["text"], borderwidth=1,
+                        bordercolor=c["border"], relief="solid",
+                        padding=(4, 2))
+        style.map("TCombobox",
+                  fieldbackground=[("readonly", c["surface_alt"]),
+                                   ("disabled", c["surface"])],
+                  background=[("readonly", c["surface_alt"])],
+                  foreground=[("readonly", c["text"]),
+                              ("disabled", c["text_dim"])])
+        self.root.option_add("*TCombobox*Listbox.background", c["surface_alt"])
+        self.root.option_add("*TCombobox*Listbox.foreground", c["text"])
+        self.root.option_add("*TCombobox*Listbox.selectBackground", c["accent"])
+        self.root.option_add("*TCombobox*Listbox.selectForeground", "#ffffff")
+        self.root.option_add("*TCombobox*Listbox.font", ("Segoe UI", 9))
+
+        # ── Treeview ──
+        style.configure("Treeview", background=c["surface"],
+                        foreground=c["text"], fieldbackground=c["surface"],
+                        borderwidth=1, bordercolor=c["border"],
+                        relief="solid", rowheight=22)
+        style.configure("Treeview.Heading", background=c["surface_alt"],
+                        foreground=c["text"], font=("Segoe UI", 8, "bold"),
+                        borderwidth=0, relief="flat", padding=(4, 2))
+        style.map("Treeview",
+                  background=[("selected", c["accent"])],
+                  foreground=[("selected", "#ffffff")])
+        style.map("Treeview.Heading",
+                  background=[("active", c["border"])])
+
+        # ── Scrollbar ──
+        style.configure("TScrollbar", background=c["bg"],
+                        troughcolor=c["surface_alt"], borderwidth=0,
+                        arrowsize=12, arrowcolor=c["text_dim"])
+        style.map("TScrollbar",
+                  background=[("active", c["border"])])
+
+        # ── Progressbar ──
+        style.configure("TProgressbar", background=c["accent"],
+                        troughcolor=c["surface_alt"], borderwidth=0,
+                        thickness=8)
+
+        # ── Spinbox ──
+        style.configure("TSpinbox", fieldbackground=c["surface_alt"],
+                        foreground=c["text"], borderwidth=1,
+                        bordercolor=c["border"], relief="solid",
+                        padding=(4, 2), arrowcolor=c["text"],
+                        insertcolor=c["text"])
+
+        # ── Compact variants ──
+        style.configure("Compact.TButton", padding=(5, 1), font=("Segoe UI", 8))
+        style.configure("Compact.TLabel", font=("Segoe UI", 8))
+        style.configure("Compact.TEntry", padding=(2, 1), font=("Segoe UI", 8))
+
+    def _build_ui(self):
+        c = DARK_COLORS
+
+        # ===== Frame Configuración del Loop (compacto) =====
+        loop_frame = ttk.LabelFrame(self.root, text=" Loop ", padding=5)
+        loop_frame.pack(fill=tk.X, padx=5, pady=(5, 3))
+
+        ttk.Label(loop_frame, text="Modo:", style="Compact.TLabel").pack(side=tk.LEFT, padx=(0, 3))
         self.loop_mode_var = tk.StringVar(value=self.settings.get("loop_mode", "once"))
         mode_combo = ttk.Combobox(
             loop_frame,
             textvariable=self.loop_mode_var,
             values=["once", "fixed", "infinite"],
-            width=12,
+            width=10,
             state="readonly",
         )
-        mode_combo.pack(side=tk.LEFT, padx=5)
+        mode_combo.pack(side=tk.LEFT, padx=2)
         mode_combo.bind("<<ComboboxSelected>>", self._on_loop_mode_change)
 
-        ttk.Label(loop_frame, text="Cantidad:").pack(side=tk.LEFT, padx=(15, 5))
+        ttk.Label(loop_frame, text="×", style="Compact.TLabel").pack(side=tk.LEFT, padx=(8, 3))
         self.loop_count_var = tk.StringVar(value=str(self.settings.get("loop_count", 1)))
-        self.loop_count_entry = ttk.Entry(loop_frame, textvariable=self.loop_count_var, width=8, validate="key")
+        self.loop_count_entry = ttk.Entry(loop_frame, textvariable=self.loop_count_var, width=6, validate="key")
         self.loop_count_entry.config(validatecommand=(self.root.register(self._validate_int_positive), "%P"))
-        self.loop_count_entry.pack(side=tk.LEFT, padx=5)
+        self.loop_count_entry.pack(side=tk.LEFT, padx=2)
 
-        ttk.Label(loop_frame, text="Espera entre loops (s):").pack(side=tk.LEFT, padx=(15, 5))
+        ttk.Label(loop_frame, text="Pausa:", style="Compact.TLabel").pack(side=tk.LEFT, padx=(10, 3))
         self.loop_delay_var = tk.StringVar(value=str(self.settings.get("loop_delay", 0)))
-        self.loop_delay_entry = ttk.Entry(loop_frame, textvariable=self.loop_delay_var, width=8, validate="key")
+        self.loop_delay_entry = ttk.Entry(loop_frame, textvariable=self.loop_delay_var, width=5, validate="key")
         self.loop_delay_entry.config(validatecommand=(self.root.register(self._validate_int_non_negative), "%P"))
-        self.loop_delay_entry.pack(side=tk.LEFT, padx=5)
+        self.loop_delay_entry.pack(side=tk.LEFT, padx=2)
+        ttk.Label(loop_frame, text="s", style="Dim.TLabel").pack(side=tk.LEFT)
 
         # Tiempo estimado total
-        self.total_time_label = ttk.Label(loop_frame, text="Tiempo estimado total: 0s")
-        self.total_time_label.pack(side=tk.RIGHT, padx=10)
+        self.total_time_label = ttk.Label(loop_frame, text="Total: 0s", style="Dim.TLabel")
+        self.total_time_label.pack(side=tk.RIGHT, padx=5)
 
         self._on_loop_mode_change(None)
 
-        # ===== Frame lista =====
-        list_frame = ttk.Frame(self.root, padding=10)
-        list_frame.pack(fill=tk.BOTH, expand=True)
+        # ===== Frame lista (principal, expande) =====
+        list_frame = ttk.Frame(self.root)
+        list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=3)
 
         columns = ("orden", "hab", "nombre", "reps", "duracion", "pausa", "tiempo")
         self.tree = ttk.Treeview(
@@ -97,24 +223,24 @@ class OrchestratorApp:
         self.tree.heading("orden", text="#")
         self.tree.heading("hab", text="✓")
         self.tree.heading("nombre", text="Script")
-        self.tree.heading("reps", text="Repeticiones")
-        self.tree.heading("duracion", text="Duración (s)")
+        self.tree.heading("reps", text="Reps")
+        self.tree.heading("duracion", text="Dur (s)")
         self.tree.heading("pausa", text="Pausa (s)")
-        self.tree.heading("tiempo", text="Tiempo total")
+        self.tree.heading("tiempo", text="Tiempo")
 
-        self.tree.column("orden", width=35, anchor="center")
-        self.tree.column("hab", width=30, anchor="center")
-        self.tree.column("nombre", width=250, anchor="w")
-        self.tree.column("reps", width=90, anchor="center")
-        self.tree.column("duracion", width=90, anchor="center")
-        self.tree.column("pausa", width=90, anchor="center")
-        self.tree.column("tiempo", width=100, anchor="center")
+        self.tree.column("orden", width=28, anchor="center")
+        self.tree.column("hab", width=26, anchor="center")
+        self.tree.column("nombre", width=200, anchor="w")
+        self.tree.column("reps", width=55, anchor="center")
+        self.tree.column("duracion", width=60, anchor="center")
+        self.tree.column("pausa", width=60, anchor="center")
+        self.tree.column("tiempo", width=75, anchor="center")
 
         # Click on checkbox column toggles enabled/disabled
         self.tree.bind("<ButtonRelease-1>", self._on_tree_click)
         # Double-click on editable columns for inline editing
         self.tree.bind("<Double-1>", self._on_tree_double_click)
-        self._inline_entry = None  # Track the inline editing Entry widget
+        self._inline_entry = None
 
         vsb = ttk.Scrollbar(list_frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=vsb.set)
@@ -122,80 +248,81 @@ class OrchestratorApp:
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         vsb.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # ===== Frame botones =====
-        btn_frame = ttk.Frame(self.root, padding=10)
-        btn_frame.pack(fill=tk.X)
+        # ===== Frame botones (compacto) =====
+        btn_frame = ttk.Frame(self.root)
+        btn_frame.pack(fill=tk.X, padx=5, pady=(0, 3))
 
-        ttk.Button(btn_frame, text="➕ Agregar", command=self._add_script).pack(
-            side=tk.LEFT, padx=5
+        ttk.Button(btn_frame, text="➕ Agregar", command=self._add_script, style="Compact.TButton").pack(
+            side=tk.LEFT, padx=2
         )
-        ttk.Button(btn_frame, text="✏️ Editar", command=self._edit_script).pack(
-            side=tk.LEFT, padx=5
+        ttk.Button(btn_frame, text="✏️ Editar", command=self._edit_script, style="Compact.TButton").pack(
+            side=tk.LEFT, padx=2
         )
-        ttk.Button(btn_frame, text="🗑️ Quitar", command=self._remove_script).pack(
-            side=tk.LEFT, padx=5
+        ttk.Button(btn_frame, text="🗑️ Quitar", command=self._remove_script, style="Compact.TButton").pack(
+            side=tk.LEFT, padx=2
         )
-        ttk.Button(btn_frame, text="⬆️ Subir", command=self._move_up).pack(
-            side=tk.LEFT, padx=5
+        ttk.Button(btn_frame, text="⬆", command=self._move_up, style="Compact.TButton", width=3).pack(
+            side=tk.LEFT, padx=(8, 1)
         )
-        ttk.Button(btn_frame, text="⬇️ Bajar", command=self._move_down).pack(
-            side=tk.LEFT, padx=5
+        ttk.Button(btn_frame, text="⬇", command=self._move_down, style="Compact.TButton", width=3).pack(
+            side=tk.LEFT, padx=1
         )
 
-        # ===== Frame ejecución =====
-        exec_frame = ttk.LabelFrame(self.root, text=" Ejecución ", padding=10)
-        exec_frame.pack(fill=tk.X, padx=10, pady=5)
+        # ===== Frame ejecución (compacto) =====
+        exec_frame = ttk.LabelFrame(self.root, text=" Ejecución ", padding=5)
+        exec_frame.pack(fill=tk.X, padx=5, pady=(0, 5))
 
-        # Status visual con colores
+        # Status visual con colores sobre fondo oscuro
         self.status_label = tk.Label(
             exec_frame,
             text=" LISTO ",
-            font=("Segoe UI", 10, "bold"),
-            fg="white",
-            bg="#2ecc71",
-            padx=10,
-            pady=4,
+            font=("Segoe UI", 9, "bold"),
+            fg="#ffffff",
+            bg=c["green"],
+            padx=8,
+            pady=2,
         )
-        self.status_label.pack(anchor=tk.W, pady=(0, 5))
+        self.status_label.pack(anchor=tk.W, pady=(0, 3))
 
         # Progress bar + percentage label
         progress_frame = ttk.Frame(exec_frame)
-        progress_frame.pack(fill=tk.X, pady=5)
+        progress_frame.pack(fill=tk.X, pady=2)
 
         self.progress = ttk.Progressbar(
             progress_frame, orient=tk.HORIZONTAL, mode="determinate"
         )
         self.progress.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        self.progress_pct_label = ttk.Label(progress_frame, text="0%", width=6)
-        self.progress_pct_label.pack(side=tk.LEFT, padx=(5, 0))
+        self.progress_pct_label = ttk.Label(progress_frame, text="0%", width=5, style="Compact.TLabel")
+        self.progress_pct_label.pack(side=tk.LEFT, padx=(3, 0))
 
-        ttk.Button(exec_frame, text="▶️ Iniciar todo", command=self._start).pack(
-            side=tk.LEFT, padx=5
+        # Botones de acción
+        ttk.Button(exec_frame, text="▶ Iniciar", command=self._start, style="Compact.TButton").pack(
+            side=tk.LEFT, padx=2
         )
-        ttk.Button(exec_frame, text="▶️ Ejecutar seleccionado", command=self._run_selected).pack(
-            side=tk.LEFT, padx=5
+        ttk.Button(exec_frame, text="▶1 Seleccionado", command=self._run_selected, style="Compact.TButton").pack(
+            side=tk.LEFT, padx=2
         )
-        ttk.Button(exec_frame, text="⏹️ Detener", command=self._stop).pack(
-            side=tk.LEFT, padx=5
+        ttk.Button(exec_frame, text="⏹ Detener", command=self._stop, style="Compact.TButton").pack(
+            side=tk.LEFT, padx=2
         )
 
         # Hotkey configurable
-        ttk.Label(exec_frame, text="Tecla rápida:").pack(side=tk.LEFT, padx=(20, 5))
+        ttk.Label(exec_frame, text="Hotkey:", style="Compact.TLabel").pack(side=tk.LEFT, padx=(10, 3))
         self.hotkey_var = tk.StringVar(value=self.saved_hotkey.upper())
         hotkey_combo = ttk.Combobox(
             exec_frame,
             textvariable=self.hotkey_var,
             values=["F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"],
-            width=5,
+            width=4,
             state="readonly",
         )
-        hotkey_combo.pack(side=tk.LEFT, padx=5)
+        hotkey_combo.pack(side=tk.LEFT, padx=2)
         hotkey_combo.bind("<<ComboboxSelected>>", self._on_hotkey_change)
 
         # Countdown timer
-        self.countdown_label = ttk.Label(exec_frame, text="⏱️ --:--", font=("Segoe UI", 10, "bold"))
-        self.countdown_label.pack(side=tk.RIGHT, padx=10)
+        self.countdown_label = ttk.Label(exec_frame, text="⏱ --:--", style="Bold.TLabel")
+        self.countdown_label.pack(side=tk.RIGHT, padx=5)
 
     def _on_hotkey_change(self, event):
         new_key = self.hotkey_var.get().lower()
@@ -271,11 +398,9 @@ class OrchestratorApp:
     def _update_time_labels(self):
         total = self._calc_total_time()
         if total is None:
-            self.total_time_label.config(text="Tiempo estimado total: ∞ (infinito)")
+            self.total_time_label.config(text="Total: ∞")
         else:
-            self.total_time_label.config(
-                text=f"Tiempo estimado total: {format_time(total)}"
-            )
+            self.total_time_label.config(text=f"Total: {format_time(total)}")
 
     def _on_loop_mode_change(self, event):
         mode = self.loop_mode_var.get()
@@ -415,39 +540,42 @@ class OrchestratorApp:
         if not path:
             return
 
-        # Validate the .exe exists
         if not os.path.isfile(path):
             messagebox.showerror("Error", f"El archivo no existe:\n{path}")
             return
 
-        win = tk.Toplevel(self.root)
-        win.title("Configurar script")
-        win.geometry("300x300")
+        win = tk.Toplevel(self.root, bg=DARK_COLORS["bg"])
+        win.title("Agregar script")
+        win.geometry("280x260")
         win.resizable(False, False)
         win.transient(self.root)
         win.grab_set()
         win.lift()
 
-        ttk.Label(win, text="Repeticiones:").pack(pady=(10, 0))
+        form = ttk.Frame(win, padding=10)
+        form.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(form, text=f"Script: {os.path.basename(path)}", style="Dim.TLabel").pack(pady=(0, 10))
+
+        ttk.Label(form, text="Repeticiones:", style="Compact.TLabel").pack(anchor=tk.W)
         reps_var = tk.IntVar(value=1)
-        ttk.Spinbox(win, from_=1, to=999, textvariable=reps_var, width=10).pack()
+        ttk.Spinbox(form, from_=1, to=999, textvariable=reps_var, width=8).pack(anchor=tk.W, pady=(0, 6))
 
-        ttk.Label(win, text="Duración estimada (s):").pack(pady=(10, 0))
+        ttk.Label(form, text="Duración (s):", style="Compact.TLabel").pack(anchor=tk.W)
         dur_var = tk.IntVar(value=10)
-        ttk.Spinbox(win, from_=1, to=9999, textvariable=dur_var, width=10).pack()
+        ttk.Spinbox(form, from_=1, to=9999, textvariable=dur_var, width=8).pack(anchor=tk.W, pady=(0, 6))
 
-        ttk.Label(win, text="Pausa entre reps (s):").pack(pady=(10, 0))
+        ttk.Label(form, text="Pausa entre reps (s):", style="Compact.TLabel").pack(anchor=tk.W)
         pause_var = tk.IntVar(value=0)
-        ttk.Spinbox(win, from_=0, to=9999, textvariable=pause_var, width=10).pack()
+        ttk.Spinbox(form, from_=0, to=9999, textvariable=pause_var, width=8).pack(anchor=tk.W, pady=(0, 6))
 
-        ttk.Label(win, text="Tiempo estimado:").pack(pady=(10, 0))
-        time_preview = ttk.Label(win, text="10s")
-        time_preview.pack()
+        time_preview = ttk.Label(form, text="Tiempo: 10s", style="Dim.TLabel")
+        time_preview.pack(anchor=tk.W, pady=(0, 8))
 
         def update_preview(*args):
             total = (dur_var.get() + pause_var.get()) * reps_var.get() - pause_var.get()
             total = max(total, 0)
-            time_preview.config(text=format_time(total))
+            time_preview.config(text=f"Tiempo: {format_time(total)}")
 
         reps_var.trace_add("write", update_preview)
         dur_var.trace_add("write", update_preview)
@@ -466,7 +594,7 @@ class OrchestratorApp:
             self._refresh_list()
             win.destroy()
 
-        ttk.Button(win, text="Guardar", command=save).pack(pady=15)
+        ttk.Button(form, text="Guardar", command=save, style="Compact.TButton").pack()
 
     def _edit_script(self):
         sel = self.tree.selection()
@@ -476,36 +604,38 @@ class OrchestratorApp:
         idx = self.tree.index(sel[0])
         item = self.playlist[idx]
 
-        win = tk.Toplevel(self.root)
+        win = tk.Toplevel(self.root, bg=DARK_COLORS["bg"])
         win.title("Editar script")
-        win.geometry("300x300")
+        win.geometry("280x280")
         win.resizable(False, False)
         win.transient(self.root)
         win.grab_set()
         win.lift()
 
-        ttk.Label(win, text=f"Script: {os.path.basename(item['path'])}").pack(pady=(10, 0))
+        form = ttk.Frame(win, padding=10)
+        form.pack(fill=tk.BOTH, expand=True)
 
-        ttk.Label(win, text="Repeticiones:").pack(pady=(10, 0))
+        ttk.Label(form, text=f"Script: {os.path.basename(item['path'])}", style="Dim.TLabel").pack(pady=(0, 10))
+
+        ttk.Label(form, text="Repeticiones:", style="Compact.TLabel").pack(anchor=tk.W)
         reps_var = tk.IntVar(value=item["repetitions"])
-        ttk.Spinbox(win, from_=1, to=999, textvariable=reps_var, width=10).pack()
+        ttk.Spinbox(form, from_=1, to=999, textvariable=reps_var, width=8).pack(anchor=tk.W, pady=(0, 6))
 
-        ttk.Label(win, text="Duración estimada (s):").pack(pady=(10, 0))
+        ttk.Label(form, text="Duración (s):", style="Compact.TLabel").pack(anchor=tk.W)
         dur_var = tk.IntVar(value=item["duration"])
-        ttk.Spinbox(win, from_=1, to=9999, textvariable=dur_var, width=10).pack()
+        ttk.Spinbox(form, from_=1, to=9999, textvariable=dur_var, width=8).pack(anchor=tk.W, pady=(0, 6))
 
-        ttk.Label(win, text="Pausa entre reps (s):").pack(pady=(10, 0))
+        ttk.Label(form, text="Pausa entre reps (s):", style="Compact.TLabel").pack(anchor=tk.W)
         pause_var = tk.IntVar(value=item["pause"])
-        ttk.Spinbox(win, from_=0, to=9999, textvariable=pause_var, width=10).pack()
+        ttk.Spinbox(form, from_=0, to=9999, textvariable=pause_var, width=8).pack(anchor=tk.W, pady=(0, 6))
 
-        ttk.Label(win, text="Tiempo estimado:").pack(pady=(10, 0))
-        time_preview = ttk.Label(win, text=format_time(self._calc_item_time(item)))
-        time_preview.pack()
+        time_preview = ttk.Label(form, text=f"Tiempo: {format_time(self._calc_item_time(item))}", style="Dim.TLabel")
+        time_preview.pack(anchor=tk.W, pady=(0, 8))
 
         def update_preview(*args):
             total = (dur_var.get() + pause_var.get()) * reps_var.get() - pause_var.get()
             total = max(total, 0)
-            time_preview.config(text=format_time(total))
+            time_preview.config(text=f"Tiempo: {format_time(total)}")
 
         reps_var.trace_add("write", update_preview)
         dur_var.trace_add("write", update_preview)
@@ -521,7 +651,7 @@ class OrchestratorApp:
             self._refresh_list()
             win.destroy()
 
-        ttk.Button(win, text="Guardar cambios", command=save).pack(pady=15)
+        ttk.Button(form, text="Guardar cambios", command=save, style="Compact.TButton").pack()
 
     def _remove_script(self):
         sel = self.tree.selection()
@@ -645,7 +775,7 @@ class OrchestratorApp:
         if not self.is_running:
             return
         self.stop_event.set()
-        self._set_status("DETENIENDO...", "#f39c12")
+        self._set_status("DETENIENDO...", DARK_COLORS["yellow"])
 
     def _do_launch(self, path):
         """Launch the .exe using os.startfile, the most native Windows way.
@@ -696,11 +826,10 @@ class OrchestratorApp:
         if max_loops is None:
             self._exec_total_time = None
             self._update_progress(0, total_per_loop)
-            self._set_status(f"EJECUTANDO | Loop ∞ | Reps/loop: {total_per_loop}", "#3498db")
+            self._set_status(f"EJECUTANDO | Loop ∞ | Reps/loop: {total_per_loop}", DARK_COLORS["blue"])
         else:
-            # Use total time already computed in _execute for the actual playlist
             self._update_progress(0, self._exec_total_time or 1)
-            self._set_status(f"EJECUTANDO | Loop 1/{max_loops} | Total reps: {total_global}", "#3498db")
+            self._set_status(f"EJECUTANDO | Loop 1/{max_loops} | Total reps: {total_global}", DARK_COLORS["blue"])
         self._poll_timer()
 
     def _cb_start_loop(self, current, max_loops, total_global):
@@ -708,9 +837,9 @@ class OrchestratorApp:
             total_per_loop = self.progress["maximum"]
             self._update_progress(0, total_per_loop)
         if max_loops is None:
-            self._set_status(f"EJECUTANDO | Loop {current} (∞)", "#3498db")
+            self._set_status(f"EJECUTANDO | Loop {current} (∞)", DARK_COLORS["blue"])
         else:
-            self._set_status(f"EJECUTANDO | Loop {current}/{max_loops}", "#3498db")
+            self._set_status(f"EJECUTANDO | Loop {current}/{max_loops}", DARK_COLORS["blue"])
 
     def _cb_start_item(self, idx, name, reps):
         pass
@@ -723,25 +852,25 @@ class OrchestratorApp:
 
         loop_str = f"L{loop}" if max_loops is None else f"L{loop}/{max_loops}"
         if total_global is None:
-            total_str = f"∞"
+            total_str = "∞"
         else:
             total_str = f"{global_rep}/{total_global}"
         self._set_status(
             f"EJECUTANDO | {loop_str} | {name}: {current}/{total_item} | Total: {total_str}",
-            "#3498db",
+            DARK_COLORS["blue"],
         )
 
     def _cb_loop_delay(self, current, delay, total_global):
-        self._set_status(f"ESPERANDO | Loop {current} → pausa {delay}s", "#9b59b6")
+        self._set_status(f"ESPERANDO | Loop {current} → pausa {delay}s", DARK_COLORS["purple"])
 
     def _cb_finish(self, msg, done, total_global, total_per_loop, loops, max_loops):
         self.is_running = False
         loop_str = f"{loops} loops" if max_loops is None else f"{loops}/{max_loops} loops"
         total_str = f"{done}/{total_global}" if total_global is not None else f"{done} (∞)"
         if msg == "Detenido":
-            self._set_status(f"DETENIDO | {loop_str} | {total_str} reps", "#e74c3c")
+            self._set_status(f"DETENIDO | {loop_str} | {total_str} reps", DARK_COLORS["red"])
         elif msg == "Completado":
-            self._set_status(f"COMPLETADO | {loop_str} | {total_str} reps", "#27ae60")
+            self._set_status(f"COMPLETADO | {loop_str} | {total_str} reps", DARK_COLORS["green"])
             messagebox.showinfo("Finalizado", f"Ejecución completada.\n{loop_str}\n{total_str} reps realizadas.")
         else:
             self._set_status(f"{msg} | {loop_str} | {total_str} reps", "#7f8c8d")
@@ -754,7 +883,7 @@ class OrchestratorApp:
     def _cb_error(self, msg):
         messagebox.showerror("Error", msg)
         self.is_running = False
-        self._set_status(f"Error: {msg}", "#c0392b")
+        self._set_status(f"Error: {msg}", DARK_COLORS["red"])
 
     def _on_close(self):
         settings = self._gather_settings()

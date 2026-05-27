@@ -158,7 +158,7 @@ class OrchestratorApp:
                   background=[("active", c["border"])])
 
         # ── Progressbar ──
-        style.configure("TProgressbar", background=c["accent"],
+        style.configure("TProgressbar", background=c["green"],
                         troughcolor=c["surface_alt"], borderwidth=0,
                         thickness=8)
 
@@ -532,6 +532,41 @@ class OrchestratorApp:
                 pass
             self._inline_entry = None
 
+    def _dark_dialog(self, title, message, kind="info"):
+        """Custom dark-themed dialog to replace native messagebox."""
+        colors = {"info": DARK_COLORS["blue"], "warning": DARK_COLORS["yellow"],
+                  "error": DARK_COLORS["red"], "success": DARK_COLORS["green"]}
+        accent = colors.get(kind, DARK_COLORS["blue"])
+
+        dlg = tk.Toplevel(self.root, bg=DARK_COLORS["bg"])
+        dlg.title(title)
+        dlg.resizable(False, False)
+        dlg.transient(self.root)
+        dlg.grab_set()
+        dlg.lift()
+
+        frame = ttk.Frame(dlg, padding=15)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(frame, text=message, style="Bold.TLabel",
+                  wraplength=350, justify=tk.CENTER).pack(pady=(5, 12))
+
+        btn = tk.Button(frame, text="  Aceptar  ",
+                        bg=accent, fg="#ffffff", font=("Segoe UI", 9, "bold"),
+                        borderwidth=0, activebackground=DARK_COLORS["accent_hover"],
+                        cursor="hand2", padx=20, pady=4,
+                        command=dlg.destroy)
+        btn.pack()
+
+        # Center on parent
+        dlg.update_idletasks()
+        pw, ph = self.root.winfo_width(), self.root.winfo_height()
+        px, py = self.root.winfo_x(), self.root.winfo_y()
+        dw, dh = dlg.winfo_width(), dlg.winfo_height()
+        dlg.geometry(f"+{px + (pw - dw)//2}+{py + (ph - dh)//2}")
+
+        dlg.wait_window()
+
     def _add_script(self):
         path = filedialog.askopenfilename(
             title="Seleccionar script TinyTask",
@@ -541,7 +576,7 @@ class OrchestratorApp:
             return
 
         if not os.path.isfile(path):
-            messagebox.showerror("Error", f"El archivo no existe:\n{path}")
+            self._dark_dialog("Error", f"El archivo no existe:\n{path}", "error")
             return
 
         win = tk.Toplevel(self.root, bg=DARK_COLORS["bg"])
@@ -599,7 +634,7 @@ class OrchestratorApp:
     def _edit_script(self):
         sel = self.tree.selection()
         if not sel:
-            messagebox.showinfo("Seleccionar", "Seleccioná un script de la lista para editarlo.")
+            self._dark_dialog("Seleccionar", "Seleccioná un script de la lista para editarlo.", "info")
             return
         idx = self.tree.index(sel[0])
         item = self.playlist[idx]
@@ -697,19 +732,19 @@ class OrchestratorApp:
 
     def _start(self):
         if not self.playlist:
-            messagebox.showwarning("Vacío", "No hay scripts en la lista.")
+            self._dark_dialog("Vacío", "No hay scripts en la lista.", "warning")
             return
         # Only run enabled items
         active = [item for item in self.playlist if item.get("enabled", True)]
         if not active:
-            messagebox.showwarning("Sin habilitados", "No hay scripts habilitados. Activá alguno con el checkbox ✅.")
+            self._dark_dialog("Sin habilitados", "No hay scripts habilitados. Activá alguno con el checkbox ✅.", "warning")
             return
         self._execute(active, self._gather_settings())
 
     def _run_selected(self):
         sel = self.tree.selection()
         if not sel:
-            messagebox.showinfo("Seleccionar", "Seleccioná un script de la lista para ejecutarlo solo.")
+            self._dark_dialog("Seleccionar", "Seleccioná un script de la lista para ejecutarlo solo.", "info")
             return
         idx = self.tree.index(sel[0])
         item = self.playlist[idx]
@@ -790,9 +825,10 @@ class OrchestratorApp:
             else:
                 subprocess.Popen([path], shell=False)
         except Exception as e:
-            messagebox.showerror(
+            self._dark_dialog(
                 "Error al lanzar",
-                f"No se pudo ejecutar:\n{path}\n\nError: {e}"
+                f"No se pudo ejecutar:\n{path}\n\nError: {e}",
+                "error"
             )
             # Do NOT set launch_event on error — executor timeout will catch it
             return
@@ -871,7 +907,7 @@ class OrchestratorApp:
             self._set_status(f"DETENIDO | {loop_str} | {total_str} reps", DARK_COLORS["red"])
         elif msg == "Completado":
             self._set_status(f"COMPLETADO | {loop_str} | {total_str} reps", DARK_COLORS["green"])
-            messagebox.showinfo("Finalizado", f"Ejecución completada.\n{loop_str}\n{total_str} reps realizadas.")
+            self._dark_dialog("Finalizado", f"Ejecución completada.\n{loop_str}\n{total_str} reps realizadas.", "success")
         else:
             self._set_status(f"{msg} | {loop_str} | {total_str} reps", "#7f8c8d")
         self._update_progress(self._exec_total_time or done, self._exec_total_time or total_per_loop or 1)
@@ -881,7 +917,7 @@ class OrchestratorApp:
         self.status_label.config(text=f" {text} ", bg=color)
 
     def _cb_error(self, msg):
-        messagebox.showerror("Error", msg)
+        self._dark_dialog("Error", msg, "error")
         self.is_running = False
         self._set_status(f"Error: {msg}", DARK_COLORS["red"])
 

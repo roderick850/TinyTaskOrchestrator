@@ -36,6 +36,10 @@ class HotkeyListener:
     def restart(self, hotkey, stop_callback):
         self.stop()
         if self._thread is not None:
-            self._thread.join(timeout=2)
+            self._thread.join(timeout=3)
+            if self._thread.is_alive():
+                # Force cleanup: unhook all keys so the old thread can exit
+                keyboard.unhook_all()
+                self._thread.join(timeout=2)
         self._running = threading.Event()
         self.start(hotkey, stop_callback)

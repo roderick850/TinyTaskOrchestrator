@@ -112,6 +112,9 @@ class OrchestratorApp:
 
         # Click on checkbox column toggles enabled/disabled
         self.tree.bind("<ButtonRelease-1>", self._on_tree_click)
+        # Double-click on editable columns for inline editing
+        self.tree.bind("<Double-1>", self._on_tree_double_click)
+        self._inline_entry = None  # Track the inline editing Entry widget
 
         vsb = ttk.Scrollbar(list_frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=vsb.set)
@@ -324,6 +327,85 @@ class OrchestratorApp:
         children = self.tree.get_children()
         if idx < len(children):
             self.tree.selection_set(children[idx])
+
+    def _on_tree_double_click(self, event):
+        """Inline editing: double-click on reps/duration/pause cell to edit directly."""
+        # Dismiss any previous inline entry
+        self._dismiss_inline_edit()
+
+        region = self.tree.identify_region(event.x, event.y)
+        column = self.tree.identify_column(event.x)
+        item_id = self.tree.identify_row(event.y)
+
+        # Editable columns: "#4"=reps, "#5"=duration, "#6"=pause
+        editable_columns = {"#4": "repetitions", "#5": "duration", "#6": "pause"}
+        if region != "cell" or column not in editable_columns or not item_id:
+            return
+
+        idx = self.tree.index(item_id)
+        field = editable_columns[column]
+        current_value = self.playlist[idx][field]
+
+        # Get cell bounding box
+        bbox = self.tree.bbox(item_id, column)
+        if not bbox:
+            return
+
+        x, y, width, height = bbox
+
+        # Create entry overlay on the cell
+        entry = ttk.Entry(self.tree, justify="center")
+        entry.place(x=x, y=y, width=width, height=height)
+        entry.insert(0, str(current_value))
+        entry.select_range(0, tk.END)
+        entry.focus_set()
+        self._inline_entry = entry
+
+        # Validation function per field
+        if field == "repetitions":
+            validate_fn = self._validate_int_positive
+        else:
+            validate_fn = self._validate_int_non_negative
+
+        def save_edit(*args):
+            value = entry.get().strip()
+            if value == "":
+                # Empty — revert to original (don't save)
+                self._dismiss_inline_edit()
+                return
+            if not validate_fn(value):
+                # Invalid — revert
+                self._dismiss_inline_edit()
+                return
+            try:
+                new_val = int(value)
+            except ValueError:
+                self._dismiss_inline_edit()
+                return
+
+            self.playlist[idx][field] = new_val
+            self._refresh_list()
+            # Re-select the edited item
+            children = self.tree.get_children()
+            if idx < len(children):
+                self.tree.selection_set(children[idx])
+            self._dismiss_inline_edit()
+
+        def cancel_edit(*args):
+            self._dismiss_inline_edit()
+
+        entry.bind("<Return>", save_edit)
+        entry.bind("<Escape>", cancel_edit)
+        entry.bind("<FocusOut>", save_edit)
+
+    def _dismiss_inline_edit(self):
+        """Destroy the inline editing entry if one exists."""
+        if self._inline_entry is not None:
+            try:
+                self._inline_entry.destroy()
+            except tk.TclError:
+                pass
+            self._inline_entry = None
 
     def _add_script(self):
         path = filedialog.askopenfilename(

@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='TinyTaskOrchestrator_v2',
+    name='TinyTaskOrchestrator',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

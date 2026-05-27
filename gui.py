@@ -3,6 +3,7 @@ from tkinter import ttk, filedialog, messagebox
 import os
 import subprocess
 import threading
+import time
 import ctypes
 
 from config_manager import load_config, save_config, DEFAULT_SETTINGS
@@ -222,13 +223,19 @@ class OrchestratorApp:
         except ValueError:
             return False
 
+    # Overhead constants (must match executor.py)
+    _LAUNCH_BUFFER = 2.0     # Post-launch buffer per execution
+    _INITIAL_SLEEP = 1.0     # Initial sleep before first execution
+
     def _calc_item_time(self, item):
         reps = item["repetitions"]
         duration = item["duration"]
         pause = item["pause"]
         # Last repetition has no trailing pause
-        total = (duration + pause) * reps - pause
-        return max(total, 0)
+        task_time = (duration + pause) * reps - pause
+        # Each execution has a launch buffer overhead
+        overhead = self._LAUNCH_BUFFER * reps
+        return max(task_time + overhead, 0)
 
     def _parse_int(self, var, default=0):
         try:
@@ -238,7 +245,10 @@ class OrchestratorApp:
 
     def _calc_total_time(self, playlist=None):
         target = playlist if playlist is not None else self.playlist
+        # Sum item times (already includes per-launch buffer overhead)
         loop_time = sum(self._calc_item_time(item) for item in target)
+        # Add initial sleep overhead (once per run)
+        loop_time += self._INITIAL_SLEEP
         mode = self.loop_mode_var.get()
         if mode == "infinite":
             return None  # Infinite
@@ -289,6 +299,11 @@ class OrchestratorApp:
             filetypes=[("Ejecutables", "*.exe"), ("Todos", "*.*")],
         )
         if not path:
+            return
+
+        # Validate the .exe exists
+        if not os.path.isfile(path):
+            messagebox.showerror("Error", f"El archivo no existe:\n{path}")
             return
 
         win = tk.Toplevel(self.root)
@@ -515,7 +530,10 @@ class OrchestratorApp:
     def _do_launch(self, path):
         """Launch the .exe using os.startfile, the most native Windows way.
         This is exactly what happens when you double-click a file in Explorer.
-        It runs completely detached from Python with zero inheritance issues."""
+        It runs completely detached from Python with zero inheritance issues.
+        
+        On failure, does NOT set launch_event — the executor will timeout
+        and report the error properly instead of silently continuing."""
         try:
             if os.name == "nt":
                 os.startfile(path)
@@ -526,8 +544,9 @@ class OrchestratorApp:
                 "Error al lanzar",
                 f"No se pudo ejecutar:\n{path}\n\nError: {e}"
             )
-        finally:
-            self.launch_event.set()
+            # Do NOT set launch_event on error — executor timeout will catch it
+            return
+        self.launch_event.set()
 
     def _update_progress(self, value, maximum):
         """Update progress bar and percentage label."""
@@ -540,7 +559,6 @@ class OrchestratorApp:
         """Update progress bar and countdown based on real elapsed time."""
         if not self.is_running:
             return
-        import time
         elapsed = time.time() - self._exec_start_time
         if self._exec_total_time is not None:
             remaining = max(self._exec_total_time - elapsed, 0)
@@ -554,7 +572,6 @@ class OrchestratorApp:
         self.root.after(500, self._poll_timer)
 
     def _cb_start_run(self, total_global, total_per_loop, max_loops):
-        import time
         self._exec_start_time = time.time()
         if max_loops is None:
             self._exec_total_time = None

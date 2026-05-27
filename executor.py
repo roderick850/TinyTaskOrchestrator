@@ -94,6 +94,9 @@ class Executor(threading.Thread):
                         self._safe_callback("on_error", str(e))
                         break
 
+                    # Count the repetition NOW (after successful launch, before duration)
+                    completed_reps_total += 1
+
                     # Wait the configured duration (checking stop frequently)
                     interval = 0.1
                     slept = 0.0
@@ -103,8 +106,6 @@ class Executor(threading.Thread):
 
                     if self.stop_event.is_set():
                         break
-
-                    completed_reps_total += 1
 
                     # Pause between repetitions (except after the last one)
                     if r < reps - 1 and pause > 0:

@@ -90,23 +90,28 @@ class OrchestratorApp:
         list_frame = ttk.Frame(self.root, padding=10)
         list_frame.pack(fill=tk.BOTH, expand=True)
 
-        columns = ("orden", "nombre", "reps", "duracion", "pausa", "tiempo")
+        columns = ("orden", "hab", "nombre", "reps", "duracion", "pausa", "tiempo")
         self.tree = ttk.Treeview(
             list_frame, columns=columns, show="headings", selectmode="browse"
         )
         self.tree.heading("orden", text="#")
+        self.tree.heading("hab", text="✓")
         self.tree.heading("nombre", text="Script")
         self.tree.heading("reps", text="Repeticiones")
         self.tree.heading("duracion", text="Duración (s)")
         self.tree.heading("pausa", text="Pausa (s)")
         self.tree.heading("tiempo", text="Tiempo total")
 
-        self.tree.column("orden", width=40, anchor="center")
-        self.tree.column("nombre", width=280, anchor="w")
+        self.tree.column("orden", width=35, anchor="center")
+        self.tree.column("hab", width=30, anchor="center")
+        self.tree.column("nombre", width=250, anchor="w")
         self.tree.column("reps", width=90, anchor="center")
         self.tree.column("duracion", width=90, anchor="center")
         self.tree.column("pausa", width=90, anchor="center")
         self.tree.column("tiempo", width=100, anchor="center")
+
+        # Click on checkbox column toggles enabled/disabled
+        self.tree.bind("<ButtonRelease-1>", self._on_tree_click)
 
         vsb = ttk.Scrollbar(list_frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=vsb.set)
@@ -244,7 +249,10 @@ class OrchestratorApp:
             return default
 
     def _calc_total_time(self, playlist=None):
-        target = playlist if playlist is not None else self.playlist
+        if playlist is None:
+            # When showing the UI estimate, only count enabled items
+            playlist = [item for item in self.playlist if item.get("enabled", True)]
+        target = playlist
         # Sum item times (already includes per-launch buffer overhead)
         loop_time = sum(self._calc_item_time(item) for item in target)
         # Add initial sleep overhead (once per run)
@@ -279,11 +287,15 @@ class OrchestratorApp:
             self.tree.delete(i)
         for idx, item in enumerate(self.playlist):
             item_time = self._calc_item_time(item)
+            # Backward compat: items without "enabled" default to True
+            enabled = item.get("enabled", True)
+            check = "✅" if enabled else "❌"
             self.tree.insert(
                 "",
                 tk.END,
                 values=(
                     idx + 1,
+                    check,
                     os.path.basename(item["path"]),
                     item["repetitions"],
                     item["duration"],
@@ -292,6 +304,26 @@ class OrchestratorApp:
                 ),
             )
         self._update_time_labels()
+
+    def _on_tree_click(self, event):
+        """Toggle enabled/disabled when clicking the checkbox column."""
+        region = self.tree.identify_region(event.x, event.y)
+        column = self.tree.identify_column(event.x)
+        item_id = self.tree.identify_row(event.y)
+
+        # Only act on the checkbox column (#2 = "hab")
+        if region != "cell" or column != "#2" or not item_id:
+            return
+
+        idx = self.tree.index(item_id)
+        # Toggle
+        current = self.playlist[idx].get("enabled", True)
+        self.playlist[idx]["enabled"] = not current
+        self._refresh_list()
+        # Re-select the toggled item
+        children = self.tree.get_children()
+        if idx < len(children):
+            self.tree.selection_set(children[idx])
 
     def _add_script(self):
         path = filedialog.askopenfilename(
@@ -346,6 +378,7 @@ class OrchestratorApp:
                     "repetitions": reps_var.get(),
                     "duration": dur_var.get(),
                     "pause": pause_var.get(),
+                    "enabled": True,
                 }
             )
             self._refresh_list()
@@ -454,7 +487,12 @@ class OrchestratorApp:
         if not self.playlist:
             messagebox.showwarning("Vacío", "No hay scripts en la lista.")
             return
-        self._execute(self.playlist, self._gather_settings())
+        # Only run enabled items
+        active = [item for item in self.playlist if item.get("enabled", True)]
+        if not active:
+            messagebox.showwarning("Sin habilitados", "No hay scripts habilitados. Activá alguno con el checkbox ✅.")
+            return
+        self._execute(active, self._gather_settings())
 
     def _run_selected(self):
         sel = self.tree.selection()

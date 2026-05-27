@@ -45,7 +45,6 @@ class OrchestratorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("TinyTask Orchestrator")
-        self.root.geometry("750x500")
         self.root.minsize(600, 380)
         self.root.configure(bg=DARK_COLORS["bg"])
 
@@ -53,6 +52,16 @@ class OrchestratorApp:
         config = load_config()
         self.playlist = config["playlist"]
         self.settings = config["settings"]
+
+        # Restore saved window geometry, or use default
+        saved_geometry = self.settings.get("window_geometry", "")
+        if saved_geometry:
+            try:
+                self.root.geometry(saved_geometry)
+            except tk.TclError:
+                self.root.geometry("750x500")
+        else:
+            self.root.geometry("750x500")
         self.executor_thread = None
         self.stop_event = threading.Event()
         self.launch_event = threading.Event()
@@ -728,6 +737,7 @@ class OrchestratorApp:
             "loop_count": self._parse_int(self.loop_count_var, 1),
             "loop_delay": self._parse_int(self.loop_delay_var, 0),
             "hotkey": self.hotkey_var.get().lower(),
+            "window_geometry": self.root.geometry(),
         }
 
     def _start(self):

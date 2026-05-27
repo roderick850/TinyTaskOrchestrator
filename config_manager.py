@@ -9,6 +9,7 @@ DEFAULT_SETTINGS = {
     "loop_count": 1,
     "loop_delay": 0,
     "hotkey": "f10",
+    "window_geometry": "",
 }
 
 

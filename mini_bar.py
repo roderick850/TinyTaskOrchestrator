@@ -30,20 +30,44 @@ DARK_COLORS = {
 }
 
 
-def _apply_dark_titlebar(toplevel):
-    """Dark title bar on Windows 10/11."""
+def _apply_dark_titlebar(toplevel, retries=5):
+    """Dark title bar on Windows 10/11 with retry logic.
+    Also forces the window to redraw so the dark mode takes effect."""
     if os.name != "nt":
         return
+    DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+    for attempt in range(retries):
+        try:
+            toplevel.update_idletasks()
+            hwnd = ctypes.windll.user32.GetParent(toplevel.winfo_id())
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                hwnd,
+                DWMWA_USE_IMMERSIVE_DARK_MODE,
+                ctypes.byref(ctypes.c_int(1)),
+                ctypes.sizeof(ctypes.c_int(1)),
+            )
+            # Force redraw
+            ctypes.windll.user32.SetWindowPos(
+                hwnd, 0, 0, 0, 0, 0,
+                0x0002 | 0x0001
+            )
+            break
+        except Exception:
+            if attempt < retries - 1:
+                import time
+                time.sleep(0.1)
     try:
         toplevel.update_idletasks()
-        hwnd = ctypes.windll.user32.GetParent(toplevel.winfo_id())
-        DWMWA_USE_IMMERSIVE_DARK_MODE = 20
-        ctypes.windll.dwmapi.DwmSetWindowAttribute(
-            hwnd,
-            DWMWA_USE_IMMERSIVE_DARK_MODE,
-            ctypes.byref(ctypes.c_int(1)),
-            ctypes.sizeof(ctypes.c_int(1)),
-        )
+        hwnd2 = toplevel.winfo_id()
+        for attr in (19, 20):
+            try:
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    hwnd2, attr,
+                    ctypes.byref(ctypes.c_int(1)),
+                    ctypes.sizeof(ctypes.c_int(1)),
+                )
+            except Exception:
+                pass
     except Exception:
         pass
 

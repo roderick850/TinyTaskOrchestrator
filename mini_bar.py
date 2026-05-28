@@ -92,7 +92,7 @@ class MiniBar:
             self.root.geometry("450x36")
 
         # Dark title bar — apply after window is realized
-        self.root.after(100, lambda: _apply_dark_titlebar(self.root))
+        self.root.after(100, lambda: _apply_dark_titlebar(self.root, retries=3))
 
         # ── Construir UI ──
         self._build_ui(pinned)

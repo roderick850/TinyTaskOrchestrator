@@ -45,17 +45,44 @@ DARK_COLORS = {
 }
 
 
-def _apply_dark_titlebar(hwnd):
+def _apply_dark_titlebar(toplevel, retries=5):
+    """Dark title bar on Windows 10/11 with retry logic.
+    Also forces the window to redraw so the dark mode takes effect."""
     if os.name != "nt":
         return
+    DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+    for attempt in range(retries):
+        try:
+            toplevel.update_idletasks()
+            hwnd = ctypes.windll.user32.GetParent(toplevel.winfo_id())
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                hwnd,
+                DWMWA_USE_IMMERSIVE_DARK_MODE,
+                ctypes.byref(ctypes.c_int(1)),
+                ctypes.sizeof(ctypes.c_int(1)),
+            )
+            # Force redraw
+            ctypes.windll.user32.SetWindowPos(
+                hwnd, 0, 0, 0, 0, 0,
+                0x0002 | 0x0001
+            )
+            break
+        except Exception:
+            if attempt < retries - 1:
+                import time
+                time.sleep(0.1)
     try:
-        DWMWA_USE_IMMERSIVE_DARK_MODE = 20
-        ctypes.windll.dwmapi.DwmSetWindowAttribute(
-            hwnd,
-            DWMWA_USE_IMMERSIVE_DARK_MODE,
-            ctypes.byref(ctypes.c_int(1)),
-            ctypes.sizeof(ctypes.c_int(1)),
-        )
+        toplevel.update_idletasks()
+        hwnd2 = toplevel.winfo_id()
+        for attr in (19, 20):
+            try:
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    hwnd2, attr,
+                    ctypes.byref(ctypes.c_int(1)),
+                    ctypes.sizeof(ctypes.c_int(1)),
+                )
+            except Exception:
+                pass
     except Exception:
         pass
 
@@ -67,13 +94,8 @@ class OrchestratorApp:
         self.root.minsize(600, 380)
         self.root.configure(bg=DARK_COLORS["bg"])
 
-        # Dark title bar on Windows
-        self.root.update_idletasks()
-        try:
-            hwnd = ctypes.windll.user32.GetParent(self.root.winfo_id())
-            _apply_dark_titlebar(hwnd)
-        except Exception:
-            pass
+        # Dark title bar on Windows (with retry logic)
+        _apply_dark_titlebar(self.root)
 
         # Estado
         config = load_config()
@@ -123,48 +145,87 @@ class OrchestratorApp:
     # ═══════════════════════════════════════════════════════════════
 
     def _build_menu(self):
+        """Custom dark menu bar using Menubutton widgets.
+        Native tk.Menu ignores bg on the horizontal bar in Windows -
+        Menubutton gives full color control."""
         c = DARK_COLORS
-        menubar = tk.Menu(self.root, bg=c["menu_bg"], fg=c["menu_fg"],
-                          activebackground=c["menu_active"], activeforeground="#ffffff",
-                          borderwidth=0, font=("Segoe UI", 9))
-        self.root.config(menu=menubar)
 
-        # ── File ──
-        file_menu = tk.Menu(menubar, tearoff=0,
-                            bg=c["menu_bg"], fg=c["menu_fg"],
-                            activebackground=c["menu_active"], activeforeground="#ffffff",
-                            font=("Segoe UI", 9))
+        # Menu bar container frame
+        self._menubar_frame = tk.Frame(
+            self.root, bg=c["menu_bg"], height=28,
+            highlightthickness=0, borderwidth=0
+        )
+        self._menubar_frame.pack(fill=tk.X, side=tk.TOP)
+        self._menubar_frame.pack_propagate(False)
+
+        # Archivo
+        file_mb = tk.Menubutton(
+            self._menubar_frame, text=" Archivo ",
+            bg=c["menu_bg"], fg=c["menu_fg"],
+            activebackground=c["menu_active"], activeforeground="#ffffff",
+            font=("Segoe UI", 9), borderwidth=0,
+            padx=6, pady=3, cursor="hand2",
+        )
+        file_mb.pack(side=tk.LEFT)
+        file_menu = tk.Menu(
+            file_mb, tearoff=0,
+            bg=c["menu_bg"], fg=c["menu_fg"],
+            activebackground=c["menu_active"], activeforeground="#ffffff",
+            font=("Segoe UI", 9), borderwidth=1, relief="solid",
+        )
         file_menu.add_command(label="💾 Guardar playlist", command=self._menu_save,
                               accelerator="Ctrl+S")
-        file_menu.add_separator()
+        file_menu.add_separator(background=c["border"])
         file_menu.add_command(label="🚪 Salir", command=self._on_close, accelerator="Alt+F4")
-        menubar.add_cascade(label="Archivo", menu=file_menu)
+        file_mb.config(menu=file_menu)
 
-        # ── View ──
-        view_menu = tk.Menu(menubar, tearoff=0,
-                            bg=c["menu_bg"], fg=c["menu_fg"],
-                            activebackground=c["menu_active"], activeforeground="#ffffff",
-                            font=("Segoe UI", 9))
+        # Ver
+        view_mb = tk.Menubutton(
+            self._menubar_frame, text=" Ver ",
+            bg=c["menu_bg"], fg=c["menu_fg"],
+            activebackground=c["menu_active"], activeforeground="#ffffff",
+            font=("Segoe UI", 9), borderwidth=0,
+            padx=6, pady=3, cursor="hand2",
+        )
+        view_mb.pack(side=tk.LEFT)
+        view_menu = tk.Menu(
+            view_mb, tearoff=0,
+            bg=c["menu_bg"], fg=c["menu_fg"],
+            activebackground=c["menu_active"], activeforeground="#ffffff",
+            font=("Segoe UI", 9), borderwidth=1, relief="solid",
+        )
         self._mini_bar_var = tk.BooleanVar(value=self._mini_bar_enabled)
-        view_menu.add_checkbutton(label="📊 Mini Bar siempre visible",
-                                  variable=self._mini_bar_var,
-                                  command=self._toggle_mini_bar)
-        view_menu.add_separator()
-        view_menu.add_command(label="🪟 Restaurar tamaño", command=self._menu_reset_size)
-        menubar.add_cascade(label="Ver", menu=view_menu)
+        view_menu.add_checkbutton(
+            label="📊 Mini Bar siempre visible",
+            variable=self._mini_bar_var,
+            command=self._toggle_mini_bar,
+            selectcolor=c["surface_alt"],
+        )
+        view_menu.add_separator(background=c["border"])
+        view_menu.add_command(label="🗟️ Restaurar tamaño", command=self._menu_reset_size)
+        view_mb.config(menu=view_menu)
 
-        # ── Help ──
-        help_menu = tk.Menu(menubar, tearoff=0,
-                            bg=c["menu_bg"], fg=c["menu_fg"],
-                            activebackground=c["menu_active"], activeforeground="#ffffff",
-                            font=("Segoe UI", 9))
+        # Ayuda
+        help_mb = tk.Menubutton(
+            self._menubar_frame, text=" Ayuda ",
+            bg=c["menu_bg"], fg=c["menu_fg"],
+            activebackground=c["menu_active"], activeforeground="#ffffff",
+            font=("Segoe UI", 9), borderwidth=0,
+            padx=6, pady=3, cursor="hand2",
+        )
+        help_mb.pack(side=tk.LEFT)
+        help_menu = tk.Menu(
+            help_mb, tearoff=0,
+            bg=c["menu_bg"], fg=c["menu_fg"],
+            activebackground=c["menu_active"], activeforeground="#ffffff",
+            font=("Segoe UI", 9), borderwidth=1, relief="solid",
+        )
         help_menu.add_command(label="ℹ️ Acerca de TinyTask Orchestrator",
                               command=self._menu_about)
-        menubar.add_cascade(label="Ayuda", menu=help_menu)
+        help_mb.config(menu=help_menu)
 
         # Ctrl+S shortcut
         self.root.bind_all("<Control-s>", lambda e: self._menu_save())
-
     def _menu_save(self):
         """Guardar playlist actual."""
         settings = self._gather_settings()

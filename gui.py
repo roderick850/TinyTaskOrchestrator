@@ -771,6 +771,8 @@ class OrchestratorApp:
         accent = colors.get(kind, DARK_COLORS["blue"])
 
         dlg = tk.Toplevel(self.root, bg=DARK_COLORS["bg"])
+        # Dark titlebar on dialog
+        dlg.after(50, lambda: _apply_dark_titlebar(dlg, retries=3))
         dlg.title(title)
         dlg.resizable(False, False)
         dlg.transient(self.root)
@@ -1189,13 +1191,19 @@ class OrchestratorApp:
             self._set_status(f"DETENIDO | {loop_str} | {total_str} reps", DARK_COLORS["red"])
         elif msg == "Completado":
             self._set_status(f"COMPLETADO | {loop_str} | {total_str} reps", DARK_COLORS["green"])
+            # Update mini bar + schedule auto-hide BEFORE the blocking dialog
+            if self.mini_bar is not None:
+                elapsed = time.time() - self._exec_start_time
+                self.mini_bar.update(f"{msg}", 0, 1, mini_format_time(int(elapsed)), False)
+                self.root.after(3000, self._hide_mini_bar)
             self._dark_dialog("Finalizado", f"Ejecución completada.\n{loop_str}\n{total_str} reps realizadas.", "success")
         else:
             self._set_status(f"{msg} | {loop_str} | {total_str} reps", "#7f8c8d")
         self._update_progress(self._exec_total_time or done, self._exec_total_time or total_per_loop or 1)
 
         # ── Mini Bar: mostrar estado final y ocultar ──
-        if self.mini_bar is not None:
+        # (Completado already handles its own auto-hide above)
+        if self.mini_bar is not None and msg != "Completado":
             elapsed = time.time() - self._exec_start_time
             self.mini_bar.update(f"{msg}", 0, 1, mini_format_time(int(elapsed)), False)
             self.root.after(3000, self._hide_mini_bar)

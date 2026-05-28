@@ -179,7 +179,7 @@ class OrchestratorApp:
     def _menu_about(self):
         """Mostrar diálogo Acerca de."""
         msg = (
-            "TinyTask Orchestrator\n\n"
+            "TinyTask Orchestrator v1.0.1\n\n"
             "Automatización de tareas con ejecución\n"
             "por tiempos fijos, loops y hotkeys globales.\n\n"
             "Modo Mini Bar para gaming en monitor único.\n\n"
@@ -198,6 +198,11 @@ class OrchestratorApp:
         else:
             if self.mini_bar is not None:
                 self.mini_bar.hide()
+
+    def _hide_mini_bar(self):
+        """Oculta la Mini Bar (llamado al finalizar ejecución)."""
+        if self.mini_bar is not None and self.mini_bar.is_visible():
+            self.mini_bar.hide()
 
     def _create_mini_bar(self):
         """Crear la Mini Bar si no existe."""
@@ -1128,10 +1133,11 @@ class OrchestratorApp:
             self._set_status(f"{msg} | {loop_str} | {total_str} reps", "#7f8c8d")
         self._update_progress(self._exec_total_time or done, self._exec_total_time or total_per_loop or 1)
 
-        # ── Reset mini bar ──
+        # ── Mini Bar: mostrar estado final y ocultar ──
         if self.mini_bar is not None:
             elapsed = time.time() - self._exec_start_time
             self.mini_bar.update(f"{msg}", 0, 1, mini_format_time(int(elapsed)), False)
+            self.root.after(3000, self._hide_mini_bar)
 
     def _set_status(self, text, color):
         """Update the status label with text and background color."""

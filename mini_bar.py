@@ -91,8 +91,8 @@ class MiniBar:
         except tk.TclError:
             self.root.geometry("450x36")
 
-        # Dark title bar
-        _apply_dark_titlebar(self.root)
+        # Dark title bar — apply after window is realized
+        self.root.after(100, lambda: _apply_dark_titlebar(self.root))
 
         # ── Construir UI ──
         self._build_ui(pinned)

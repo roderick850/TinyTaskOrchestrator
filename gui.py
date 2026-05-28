@@ -92,7 +92,17 @@ class OrchestratorApp:
         # Hotkey global configurable (toggles: start all / stop)
         self.saved_hotkey = self.settings.get("hotkey", "f10")
         self.hotkey = HotkeyListener()
-        self.hotkey.start(self.saved_hotkey, self._hotkey_toggle)
+        try:
+            actual = self.hotkey.start(self.saved_hotkey, self._hotkey_toggle)
+            if actual != self.saved_hotkey:
+                self.saved_hotkey = actual
+                self.settings["hotkey"] = actual
+                self.hotkey_var_set_to = actual.upper()
+            else:
+                self.hotkey_var_set_to = self.saved_hotkey.upper()
+        except RuntimeError:
+            self._hotkey_failed = True
+            self.hotkey_var_set_to = self.saved_hotkey.upper()
 
         # Setup dark theme before building UI
         self._setup_dark_theme()
@@ -340,7 +350,7 @@ class OrchestratorApp:
 
         # Hotkey configurable
         ttk.Label(exec_frame, text="Hotkey:", style="Compact.TLabel").pack(side=tk.LEFT, padx=(10, 3))
-        self.hotkey_var = tk.StringVar(value=self.saved_hotkey.upper())
+        self.hotkey_var = tk.StringVar(value=getattr(self, 'hotkey_var_set_to', self.saved_hotkey.upper()))
         hotkey_combo = ttk.Combobox(
             exec_frame,
             textvariable=self.hotkey_var,
@@ -352,14 +362,23 @@ class OrchestratorApp:
         ttk.Label(exec_frame, text="(solo ▶ Iniciar todo / ⏹ Detener)", style="Dim.TLabel").pack(side=tk.LEFT, padx=(3, 0))
         hotkey_combo.bind("<<ComboboxSelected>>", self._on_hotkey_change)
 
+        # If hotkey failed to register, show warning in exec frame
+        if getattr(self, '_hotkey_failed', False):
+            ttk.Label(exec_frame, text="(⚠️ no disponible — tecla en uso)",
+                      style="Dim.TLabel").pack(side=tk.LEFT, padx=(3, 0))
+
         # Countdown timer
         self.countdown_label = ttk.Label(exec_frame, text="⏱ --:--", style="Bold.TLabel")
         self.countdown_label.pack(side=tk.RIGHT, padx=5)
 
     def _on_hotkey_change(self, event):
         new_key = self.hotkey_var.get().lower()
-        self.hotkey.restart(new_key, self._hotkey_toggle)
-        self.settings["hotkey"] = new_key
+        try:
+            actual = self.hotkey.restart(new_key, self._hotkey_toggle)
+            if actual:
+                self.settings["hotkey"] = actual
+        except RuntimeError:
+            pass  # keep previous hotkey
 
     def _hotkey_toggle(self):
         """Called by the global hotkey.

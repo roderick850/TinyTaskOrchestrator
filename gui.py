@@ -9,6 +9,7 @@ import ctypes
 from config_manager import load_config, save_config, DEFAULT_SETTINGS
 from executor import Executor
 from hotkey import HotkeyListener
+from mini_bar import MiniBar, format_time as mini_format_time
 
 
 def format_time(seconds):
@@ -38,6 +39,9 @@ DARK_COLORS = {
     "yellow":       "#e0b860",   # warning
     "blue":         "#6090e0",   # running
     "purple":       "#b090e0",   # waiting
+    "menu_bg":      "#252538",   # menu bar background
+    "menu_fg":      "#cdd6f4",   # menu bar text
+    "menu_active":  "#3b3b56",   # menu hover
 }
 
 
@@ -54,6 +58,7 @@ def _apply_dark_titlebar(hwnd):
         )
     except Exception:
         pass
+
 
 class OrchestratorApp:
     def __init__(self, root):
@@ -98,6 +103,13 @@ class OrchestratorApp:
         # Setup dark theme before building UI
         self._setup_dark_theme()
 
+        # ── Mini Bar state (must be before _build_menu) ──
+        self.mini_bar = None
+        self._mini_bar_enabled = self.settings.get("mini_bar_enabled", True)
+
+        # ── Menu Bar ──
+        self._build_menu()
+
         # Construir UI
         self._build_ui()
         self._refresh_list()
@@ -105,6 +117,105 @@ class OrchestratorApp:
 
         # Guardar al cerrar
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    # ═══════════════════════════════════════════════════════════════
+    # MENU BAR
+    # ═══════════════════════════════════════════════════════════════
+
+    def _build_menu(self):
+        c = DARK_COLORS
+        menubar = tk.Menu(self.root, bg=c["menu_bg"], fg=c["menu_fg"],
+                          activebackground=c["menu_active"], activeforeground="#ffffff",
+                          borderwidth=0, font=("Segoe UI", 9))
+        self.root.config(menu=menubar)
+
+        # ── File ──
+        file_menu = tk.Menu(menubar, tearoff=0,
+                            bg=c["menu_bg"], fg=c["menu_fg"],
+                            activebackground=c["menu_active"], activeforeground="#ffffff",
+                            font=("Segoe UI", 9))
+        file_menu.add_command(label="💾 Guardar playlist", command=self._menu_save,
+                              accelerator="Ctrl+S")
+        file_menu.add_separator()
+        file_menu.add_command(label="🚪 Salir", command=self._on_close, accelerator="Alt+F4")
+        menubar.add_cascade(label="Archivo", menu=file_menu)
+
+        # ── View ──
+        view_menu = tk.Menu(menubar, tearoff=0,
+                            bg=c["menu_bg"], fg=c["menu_fg"],
+                            activebackground=c["menu_active"], activeforeground="#ffffff",
+                            font=("Segoe UI", 9))
+        self._mini_bar_var = tk.BooleanVar(value=self._mini_bar_enabled)
+        view_menu.add_checkbutton(label="📊 Mini Bar siempre visible",
+                                  variable=self._mini_bar_var,
+                                  command=self._toggle_mini_bar)
+        view_menu.add_separator()
+        view_menu.add_command(label="🪟 Restaurar tamaño", command=self._menu_reset_size)
+        menubar.add_cascade(label="Ver", menu=view_menu)
+
+        # ── Help ──
+        help_menu = tk.Menu(menubar, tearoff=0,
+                            bg=c["menu_bg"], fg=c["menu_fg"],
+                            activebackground=c["menu_active"], activeforeground="#ffffff",
+                            font=("Segoe UI", 9))
+        help_menu.add_command(label="ℹ️ Acerca de TinyTask Orchestrator",
+                              command=self._menu_about)
+        menubar.add_cascade(label="Ayuda", menu=help_menu)
+
+        # Ctrl+S shortcut
+        self.root.bind_all("<Control-s>", lambda e: self._menu_save())
+
+    def _menu_save(self):
+        """Guardar playlist actual."""
+        settings = self._gather_settings()
+        save_config(self.playlist, settings)
+        self._dark_dialog("Guardado", "Playlist y configuración guardadas.", "success")
+
+    def _menu_reset_size(self):
+        """Restaurar tamaño default."""
+        self.root.geometry("750x500")
+        self._dark_dialog("Tamaño", "Ventana restaurada a 750×500.", "info")
+
+    def _menu_about(self):
+        """Mostrar diálogo Acerca de."""
+        msg = (
+            "TinyTask Orchestrator\n\n"
+            "Automatización de tareas con ejecución\n"
+            "por tiempos fijos, loops y hotkeys globales.\n\n"
+            "Modo Mini Bar para gaming en monitor único.\n\n"
+            "Creado por Roderick + Hefesto 🛠️"
+        )
+        self._dark_dialog("Acerca de", msg, "info")
+
+    def _toggle_mini_bar(self):
+        """Activar/desactivar Mini Bar desde el menú."""
+        enabled = self._mini_bar_var.get()
+        self._mini_bar_enabled = enabled
+        if enabled:
+            if self.mini_bar is None:
+                self._create_mini_bar()
+            self.mini_bar.show()
+        else:
+            if self.mini_bar is not None:
+                self.mini_bar.hide()
+
+    def _create_mini_bar(self):
+        """Crear la Mini Bar si no existe."""
+        if self.mini_bar is not None:
+            return
+        self.mini_bar = MiniBar(self, self.settings)
+        self.mini_bar.root.lift()
+
+    def _ensure_mini_bar(self):
+        """Asegurar que la mini bar existe y está visible."""
+        if self.mini_bar is None:
+            self._create_mini_bar()
+        if not self.mini_bar.is_visible():
+            self.mini_bar.show()
+
+    # ═══════════════════════════════════════════════════════════════
+    # DARK THEME (sin cambios de lógica, solo colores)
+    # ═══════════════════════════════════════════════════════════════
 
     def _setup_dark_theme(self):
         """Configure ttk styles for a compact dark theme (clam-based)."""
@@ -357,6 +468,10 @@ class OrchestratorApp:
         self.countdown_label = ttk.Label(exec_frame, text="⏱ --:--", style="Bold.TLabel")
         self.countdown_label.pack(side=tk.RIGHT, padx=5)
 
+    # ═══════════════════════════════════════════════════════════════
+    # HOTKEY
+    # ═══════════════════════════════════════════════════════════════
+
     def _on_hotkey_change(self, event):
         new_key = self.hotkey_var.get().lower()
         self.hotkey.stop()
@@ -375,6 +490,10 @@ class OrchestratorApp:
                 self._start()
         self.root.after(0, action)
 
+    # ═══════════════════════════════════════════════════════════════
+    # VALIDATION
+    # ═══════════════════════════════════════════════════════════════
+
     def _validate_int_positive(self, value):
         if value == "":
             return True
@@ -392,6 +511,10 @@ class OrchestratorApp:
             return v >= 0
         except ValueError:
             return False
+
+    # ═══════════════════════════════════════════════════════════════
+    # TIME CALCULATIONS
+    # ═══════════════════════════════════════════════════════════════
 
     # Overhead constants (must match executor.py)
     _LAUNCH_BUFFER = 2.0     # Post-launch buffer per execution
@@ -444,6 +567,10 @@ class OrchestratorApp:
         else:
             self.loop_count_entry.config(state="normal")
         self._update_time_labels()
+
+    # ═══════════════════════════════════════════════════════════════
+    # PLAYLIST UI
+    # ═══════════════════════════════════════════════════════════════
 
     def _refresh_list(self):
         for i in self.tree.get_children():
@@ -566,6 +693,10 @@ class OrchestratorApp:
             except tk.TclError:
                 pass
             self._inline_entry = None
+
+    # ═══════════════════════════════════════════════════════════════
+    # DIALOGS
+    # ═══════════════════════════════════════════════════════════════
 
     def _dark_dialog(self, title, message, kind="info"):
         """Custom dark-themed dialog to replace native messagebox."""
@@ -757,14 +888,23 @@ class OrchestratorApp:
             self._refresh_list()
             self.tree.selection_set(self.tree.get_children()[idx + 1])
 
+    # ═══════════════════════════════════════════════════════════════
+    # EXECUTION
+    # ═══════════════════════════════════════════════════════════════
+
     def _gather_settings(self):
-        return {
+        settings = {
             "loop_mode": self.loop_mode_var.get(),
             "loop_count": self._parse_int(self.loop_count_var, 1),
             "loop_delay": self._parse_int(self.loop_delay_var, 0),
             "hotkey": self.hotkey_var.get().lower(),
             "window_geometry": self.root.geometry(),
+            "mini_bar_enabled": self._mini_bar_enabled,
         }
+        if self.mini_bar is not None:
+            mb = self.mini_bar.get_settings()
+            settings.update(mb)
+        return settings
 
     def _start(self):
         if not self.playlist:
@@ -811,6 +951,10 @@ class OrchestratorApp:
         # Compute real total time based on the actual playlist being run
         self._exec_total_time = self._calc_total_time(playlist)
 
+        # ── Show mini bar if enabled ──
+        if self._mini_bar_enabled:
+            self._ensure_mini_bar()
+
         callbacks = {
             "on_start_run": lambda total_global, total_per_loop, max_loops: self.root.after(
                 0, lambda: self._cb_start_run(total_global, total_per_loop, max_loops)
@@ -847,6 +991,10 @@ class OrchestratorApp:
             return
         self.stop_event.set()
         self._set_status("DETENIENDO...", DARK_COLORS["yellow"])
+        # Update mini bar
+        if self.mini_bar is not None:
+            elapsed = time.time() - self._exec_start_time
+            self.mini_bar.update("Deteniendo...", 0, 1, mini_format_time(int(elapsed)), True)
 
     def _do_launch(self, path):
         """Launch the .exe using os.startfile, the most native Windows way.
@@ -887,10 +1035,26 @@ class OrchestratorApp:
             self.countdown_label.config(text=f"⏱️ {format_time(int(remaining))}")
             prog = min(int(elapsed), self._exec_total_time)
             self._update_progress(prog, self._exec_total_time)
+
+            # ── Update mini bar ──
+            if self.mini_bar is not None and self.mini_bar.is_visible():
+                self.mini_bar.update(
+                    self.status_label.cget("text").replace(" EJECUTANDO | ", ""),
+                    prog,
+                    self._exec_total_time,
+                    f"-{mini_format_time(int(remaining))}",
+                    True,
+                )
         else:
             # Infinite mode: show elapsed time
             self.countdown_label.config(text=f"⏱️ {format_time(int(elapsed))}")
-            # Progress cycles per-loop based on reps completed is handled by executor callbacks
+            if self.mini_bar is not None and self.mini_bar.is_visible():
+                self.mini_bar.update(
+                    self.status_label.cget("text").replace(" EJECUTANDO | ", ""),
+                    elapsed % 100, 100,
+                    mini_format_time(int(elapsed)),
+                    True,
+                )
         self.root.after(500, self._poll_timer)
 
     def _cb_start_run(self, total_global, total_per_loop, max_loops):
@@ -898,10 +1062,12 @@ class OrchestratorApp:
         if max_loops is None:
             self._exec_total_time = None
             self._update_progress(0, total_per_loop)
-            self._set_status(f"EJECUTANDO | Loop ∞ | Reps/loop: {total_per_loop}", DARK_COLORS["blue"])
+            status_text = f"EJECUTANDO | Loop ∞ | Reps/loop: {total_per_loop}"
+            self._set_status(status_text, DARK_COLORS["blue"])
         else:
             self._update_progress(0, self._exec_total_time or 1)
-            self._set_status(f"EJECUTANDO | Loop 1/{max_loops} | Total reps: {total_global}", DARK_COLORS["blue"])
+            status_text = f"EJECUTANDO | Loop 1/{max_loops} | Total reps: {total_global}"
+            self._set_status(status_text, DARK_COLORS["blue"])
         self._poll_timer()
 
     def _cb_start_loop(self, current, max_loops, total_global):
@@ -909,9 +1075,10 @@ class OrchestratorApp:
             total_per_loop = self.progress["maximum"]
             self._update_progress(0, total_per_loop)
         if max_loops is None:
-            self._set_status(f"EJECUTANDO | Loop {current} (∞)", DARK_COLORS["blue"])
+            status_text = f"EJECUTANDO | Loop {current} (∞)"
         else:
-            self._set_status(f"EJECUTANDO | Loop {current}/{max_loops}", DARK_COLORS["blue"])
+            status_text = f"EJECUTANDO | Loop {current}/{max_loops}"
+        self._set_status(status_text, DARK_COLORS["blue"])
 
     def _cb_start_item(self, idx, name, reps):
         pass
@@ -927,10 +1094,23 @@ class OrchestratorApp:
             total_str = "∞"
         else:
             total_str = f"{global_rep}/{total_global}"
-        self._set_status(
-            f"EJECUTANDO | {loop_str} | {name}: {current}/{total_item} | Total: {total_str}",
-            DARK_COLORS["blue"],
+        status_text = (
+            f"EJECUTANDO | {loop_str} | {name}: {current}/{total_item} | Total: {total_str}"
         )
+        self._set_status(status_text, DARK_COLORS["blue"])
+
+        # ── Update mini bar with more detail ──
+        if self.mini_bar is not None and self.mini_bar.is_visible():
+            elapsed = time.time() - self._exec_start_time
+            short_status = f"{name}: {current}/{total_item} | {loop_str}"
+            progress_max = total_global if total_global is not None else total_per_loop
+            progress_val = global_rep
+            if self._exec_total_time is not None:
+                remaining = max(self._exec_total_time - elapsed, 0)
+                time_text = f"-{mini_format_time(int(remaining))}"
+            else:
+                time_text = mini_format_time(int(elapsed))
+            self.mini_bar.update(short_status, progress_val, progress_max, time_text, True)
 
     def _cb_loop_delay(self, current, delay, total_global):
         self._set_status(f"ESPERANDO | Loop {current} → pausa {delay}s", DARK_COLORS["purple"])
@@ -948,6 +1128,11 @@ class OrchestratorApp:
             self._set_status(f"{msg} | {loop_str} | {total_str} reps", "#7f8c8d")
         self._update_progress(self._exec_total_time or done, self._exec_total_time or total_per_loop or 1)
 
+        # ── Reset mini bar ──
+        if self.mini_bar is not None:
+            elapsed = time.time() - self._exec_start_time
+            self.mini_bar.update(f"{msg}", 0, 1, mini_format_time(int(elapsed)), False)
+
     def _set_status(self, text, color):
         """Update the status label with text and background color."""
         self.status_label.config(text=f" {text} ", bg=color)
@@ -956,11 +1141,15 @@ class OrchestratorApp:
         self._dark_dialog("Error", msg, "error")
         self.is_running = False
         self._set_status(f"Error: {msg}", DARK_COLORS["red"])
+        if self.mini_bar is not None:
+            self.mini_bar.reset()
 
     def _on_close(self):
         settings = self._gather_settings()
         save_config(self.playlist, settings)
         self.hotkey.stop()
+        if self.mini_bar is not None:
+            self.mini_bar.close()
         self.root.destroy()
 
 

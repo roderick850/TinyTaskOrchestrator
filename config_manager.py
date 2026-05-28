@@ -10,6 +10,11 @@ DEFAULT_SETTINGS = {
     "loop_delay": 0,
     "hotkey": "f10",
     "window_geometry": "",
+    # ── Mini Bar / UI settings ──
+    "mini_bar_enabled": True,
+    "mini_bar_geometry": "450x36",
+    "mini_bar_pinned": True,
+    "menu_bar_visible": True,
 }
 
 
@@ -19,7 +24,10 @@ def _get_app_dir():
     Otherwise, use the script's own directory."""
     if getattr(sys, "frozen", False):
         # Running from a compiled .exe (PyInstaller)
-        app_data = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "TinyTaskOrchestrator")
+        app_data = os.path.join(
+            os.environ.get("APPDATA", os.path.expanduser("~")),
+            "TinyTaskOrchestrator",
+        )
         if not os.path.exists(app_data):
             os.makedirs(app_data)
         return app_data
@@ -53,4 +61,9 @@ def load_config():
 def save_config(playlist, settings):
     path = get_config_path()
     with open(path, "w", encoding="utf-8") as f:
-        json.dump({"playlist": playlist, "settings": settings}, f, indent=2, ensure_ascii=False)
+        json.dump(
+            {"playlist": playlist, "settings": settings},
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )

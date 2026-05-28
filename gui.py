@@ -103,6 +103,10 @@ class OrchestratorApp:
         # Setup dark theme before building UI
         self._setup_dark_theme()
 
+        # ── Mini Bar state (must be before _build_menu) ──
+        self.mini_bar = None
+        self._mini_bar_enabled = self.settings.get("mini_bar_enabled", True)
+
         # ── Menu Bar ──
         self._build_menu()
 
@@ -110,10 +114,6 @@ class OrchestratorApp:
         self._build_ui()
         self._refresh_list()
         self._update_time_labels()
-
-        # ── Mini Bar ──
-        self.mini_bar = None
-        self._mini_bar_enabled = self.settings.get("mini_bar_enabled", True)
 
         # Guardar al cerrar
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)

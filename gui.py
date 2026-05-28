@@ -92,19 +92,7 @@ class OrchestratorApp:
         # Hotkey global configurable (toggles: start all / stop)
         self.saved_hotkey = self.settings.get("hotkey", "f10")
         self.hotkey = HotkeyListener()
-        self._hotkey_ok = False
-        # Try requested key, then fallbacks
-        fallbacks = ["f9", "f8", "f7", "f6", "f12"]
-        keys_to_try = [self.saved_hotkey] + [k for k in fallbacks if k != self.saved_hotkey]
-        for key in keys_to_try:
-            try:
-                self.hotkey.start(key, self._hotkey_toggle)
-                self.saved_hotkey = key
-                self.settings["hotkey"] = key
-                self._hotkey_ok = True
-                break
-            except RuntimeError:
-                continue
+        self.hotkey.start(self.saved_hotkey, self._hotkey_toggle)
         self.hotkey_var_set_to = self.saved_hotkey.upper()
 
         # Setup dark theme before building UI
@@ -365,44 +353,16 @@ class OrchestratorApp:
         ttk.Label(exec_frame, text="(solo ▶ Iniciar todo / ⏹ Detener)", style="Dim.TLabel").pack(side=tk.LEFT, padx=(3, 0))
         hotkey_combo.bind("<<ComboboxSelected>>", self._on_hotkey_change)
 
-        # Warning label (hidden/shown dynamically)
-        self._hotkey_warn_label = ttk.Label(
-            exec_frame, text="(⚠ no disponible — tecla en uso)",
-            style="Dim.TLabel"
-        )
-        if not self._hotkey_ok:
-            self._hotkey_warn_label.pack(side=tk.LEFT, padx=(3, 0))
-
         # Countdown timer
         self.countdown_label = ttk.Label(exec_frame, text="⏱ --:--", style="Bold.TLabel")
         self.countdown_label.pack(side=tk.RIGHT, padx=5)
 
     def _on_hotkey_change(self, event):
         new_key = self.hotkey_var.get().lower()
-        old_key = self.saved_hotkey
-        try:
-            self.hotkey.stop()
-            self.hotkey.start(new_key, self._hotkey_toggle)
-            self.saved_hotkey = new_key
-            self.settings["hotkey"] = new_key
-            self._hotkey_ok = True
-            self._update_hotkey_warning()
-        except RuntimeError:
-            # Revert to previous key
-            self.hotkey_var.set(old_key.upper())
-            try:
-                self.hotkey.start(old_key, self._hotkey_toggle)
-                self._hotkey_ok = True
-            except RuntimeError:
-                self._hotkey_ok = False
-            self._update_hotkey_warning()
-
-    def _update_hotkey_warning(self):
-        if hasattr(self, '_hotkey_warn_label') and self._hotkey_warn_label:
-            if self._hotkey_ok:
-                self._hotkey_warn_label.pack_forget()
-            else:
-                self._hotkey_warn_label.pack(side=tk.LEFT, padx=(3, 0))
+        self.hotkey.stop()
+        self.hotkey.start(new_key, self._hotkey_toggle)
+        self.saved_hotkey = new_key
+        self.settings["hotkey"] = new_key
 
     def _hotkey_toggle(self):
         """Called by the global hotkey.

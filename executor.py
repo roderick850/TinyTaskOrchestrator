@@ -49,9 +49,10 @@ class Executor(threading.Thread):
             if self.stop_event.is_set():
                 break
 
-            current_loop += 1
-            if max_loops is not None and current_loop > max_loops:
+            if max_loops is not None and current_loop >= max_loops:
                 break
+
+            current_loop += 1
 
             self._safe_callback("on_start_loop", current_loop, max_loops, total_global_reps)
 

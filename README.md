@@ -6,10 +6,18 @@ TinyTask Orchestrator toma scripts compilados a `.exe` con [TinyTask](https://ti
 
 ---
 
+## 🚀 Descarga rápida
+
+👉 **[Descargar TinyTaskOrchestrator.exe](https://github.com/roderick850/TinyTaskOrchestrator/releases/latest)** — ~11 MB, portable, no requiere instalación.
+
+> 💡 Si Windows SmartScreen te bloquea, hacé clic en **"Más información"** → **"Ejecutar de todas formas"**. El archivo es seguro, es un falso positivo porque no está firmado digitalmente.
+
+---
+
 ## Requisitos
 
 - **Windows** (10/11)
-- **Python 3.10+** (solo para ejecutar desde el código fuente)
+- **Python 3.10+** (solo si ejecutás desde el código fuente)
 - [TinyTask](https://tinytask.net) — para grabar y compilar tus macros a `.exe`
 
 ### Dependencia Python
@@ -24,7 +32,7 @@ TinyTask Orchestrator toma scripts compilados a `.exe` con [TinyTask](https://ti
 
 ### Opción 1: Ejecutable compilado (recomendado)
 
-Bajá `TinyTaskOrchestrator.exe` de la carpeta `dist/` y ejecutalo. No necesita Python ni nada instalado.
+Descargá `TinyTaskOrchestrator.exe` desde la sección de **[Releases](https://github.com/roderick850/TinyTaskOrchestrator/releases)**. Es portable — no necesita Python ni nada instalado. Solo descargá, ejecutá, y listo.
 
 ### Opción 2: Desde el código fuente
 

@@ -608,7 +608,7 @@ class OrchestratorApp:
         except (ValueError, TypeError):
             return default
 
-    def _calc_total_time(self, playlist=None):
+    def _calc_total_time(self, playlist=None, settings=None):
         if playlist is None:
             # When showing the UI estimate, only count enabled items
             playlist = [item for item in self.playlist if item.get("enabled", True)]
@@ -617,11 +617,17 @@ class OrchestratorApp:
         loop_time = sum(self._calc_item_time(item) for item in target)
         # Add initial sleep overhead (once per run)
         loop_time += self._INITIAL_SLEEP
-        mode = self.loop_mode_var.get()
+        # Use settings if provided (from _execute), otherwise read from UI
+        if settings:
+            mode = settings.get("loop_mode", "once")
+            count = settings.get("loop_count", 1) if mode == "fixed" else 1
+            delay = settings.get("loop_delay", 0)
+        else:
+            mode = self.loop_mode_var.get()
+            count = self._parse_int(self.loop_count_var, 1) if mode == "fixed" else 1
+            delay = self._parse_int(self.loop_delay_var, 0)
         if mode == "infinite":
             return None  # Infinite
-        count = self._parse_int(self.loop_count_var, 1) if mode == "fixed" else 1
-        delay = self._parse_int(self.loop_delay_var, 0)
         total = loop_time * count + delay * max(count - 1, 0)
         return total
 
@@ -1023,7 +1029,7 @@ class OrchestratorApp:
         self.launch_event = threading.Event()
 
         # Compute real total time based on the actual playlist being run
-        self._exec_total_time = self._calc_total_time(playlist)
+        self._exec_total_time = self._calc_total_time(playlist, settings)
 
         # ── Show mini bar if enabled ──
         if self._mini_bar_enabled:

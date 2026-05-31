@@ -1070,6 +1070,9 @@ class OrchestratorApp:
         if not playlist:
             return
 
+        # Save active playlist for duration lookups during execution
+        self._exec_playlist = playlist
+
         # Ensure any previous thread has fully terminated
         if self.executor_thread is not None and self.executor_thread.is_alive():
             self.executor_thread.join(timeout=5)
@@ -1081,6 +1084,10 @@ class OrchestratorApp:
 
         # Compute real total time based on the actual playlist being run
         self._exec_total_time = self._calc_total_time(playlist, settings)
+
+        # Per-item timing tracking (for infinite mode script countdown)
+        self._cur_item_start_time = 0
+        self._cur_item_total_time = 0
 
         # ── Show mini bar if enabled ──
         if self._mini_bar_enabled:
@@ -1177,13 +1184,22 @@ class OrchestratorApp:
                     True,
                 )
         else:
-            # Infinite mode: show elapsed time
-            self.countdown_label.config(text=f"⏱️ {format_time(int(elapsed))}")
+            # Infinite mode: show script countdown + total session elapsed
+            elapsed = time.time() - self._exec_start_time
+            item_elapsed = time.time() - self._cur_item_start_time
+            item_remaining = max(self._cur_item_total_time - item_elapsed, 0)
+            self.countdown_label.config(
+                text=f"⏱️ -{format_time(int(item_remaining))} │ {format_time(int(elapsed))}"
+            )
             if self.mini_bar is not None and self.mini_bar.is_visible():
+                prog_max = self._cur_item_total_time if self._cur_item_total_time > 0 else 1
+                prog_val = int(item_elapsed) % max(prog_max, 1)
+                time_text = f"-{mini_format_time(int(item_remaining))}│{mini_format_time(int(elapsed))}"
                 self.mini_bar.update(
                     self.status_label.cget("text").replace(" EJECUTANDO | ", ""),
-                    elapsed % 100, 100,
-                    mini_format_time(int(elapsed)),
+                    prog_val,
+                    prog_max,
+                    time_text,
                     True,
                 )
         self.root.after(500, self._poll_timer)
@@ -1212,7 +1228,11 @@ class OrchestratorApp:
         self._set_status(status_text, DARK_COLORS["blue"])
 
     def _cb_start_item(self, idx, name, reps):
-        pass
+        # Track per-script timing for infinite mode countdown
+        if hasattr(self, '_exec_playlist') and idx < len(self._exec_playlist):
+            item = self._exec_playlist[idx]
+            self._cur_item_start_time = time.time()
+            self._cur_item_total_time = self._calc_item_time(item)
 
     def _cb_repeat(self, global_rep, total_global, total_per_loop, name, current, total_item, loop, max_loops):
         # Infinite mode: track per-loop progress by rep count (bar is reset each loop)
@@ -1240,7 +1260,9 @@ class OrchestratorApp:
                 remaining = max(self._exec_total_time - elapsed, 0)
                 time_text = f"-{mini_format_time(int(remaining))}"
             else:
-                time_text = mini_format_time(int(elapsed))
+                item_elapsed = time.time() - self._cur_item_start_time
+                item_remaining = max(self._cur_item_total_time - item_elapsed, 0)
+                time_text = f"-{mini_format_time(int(item_remaining))}│{mini_format_time(int(elapsed))}"
             self.mini_bar.update(short_status, progress_val, progress_max, time_text, True)
 
     def _cb_loop_delay(self, current, delay, total_global):

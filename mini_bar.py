@@ -164,12 +164,12 @@ class MiniBar:
         )
         self.progress.pack(side=tk.LEFT, padx=2)
 
-        # ── Tiempo ──
+        # ── Tiempo (script countdown | total sesión) ──
         self.time_label = tk.Label(
             bar, text="--:--",
             fg=c["text_dim"], bg=c["bg"],
             font=("Segoe UI", 8),
-            width=7,
+            width=16,
         )
         self.time_label.pack(side=tk.LEFT, padx=3)
 

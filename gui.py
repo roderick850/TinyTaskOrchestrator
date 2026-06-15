@@ -1256,10 +1256,24 @@ class OrchestratorApp:
         x, y, width, height = bbox
 
         # Create entry overlay on the cell
-        entry = ctk.CTkEntry(self.tree, justify="center")
+        # Use tk.Entry (not CTkEntry) for reliable overlay on ttk.Treeview.
+        # CTkEntry as child of Treeview can have rendering/z-order issues
+        # after the clam theme borderwidth=0 + rowheight changes.
+        c = DARK_COLORS
+        entry = tk.Entry(
+            self.tree,
+            justify="center",
+            bg=c["surface_alt"],
+            fg=c["text"],
+            insertbackground=c["text"],
+            relief="flat",
+            borderwidth=0,
+            font=("Segoe UI", 10),
+        )
         entry.place(x=x, y=y, width=width, height=height)
         entry.insert(0, str(current_value))
         entry.select_range(0, tk.END)
+        entry.lift()  # ensure z-order above Treeview internal canvas
         entry.focus_set()
         self._inline_entry = entry
 

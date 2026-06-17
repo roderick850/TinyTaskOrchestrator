@@ -287,8 +287,16 @@ class MiniBar:
         self.app.root.lift()
 
     def _on_configure(self, event):
-        """Guardar geometría solo en cambios de tamaño (no posición)."""
-        pass  # La geometría se guarda al cerrar la app
+        """Guardar geometría en tiempo real cada vez que se mueve/redimensiona."""
+        # Solo guardar si la ventana es la que generó el evento (no hijos)
+        if event.widget is not self.root:
+            return
+        try:
+            geo = self.root.geometry()
+            if geo and geo != self.settings.get("mini_bar_geometry", ""):
+                self.settings["mini_bar_geometry"] = geo
+        except tk.TclError:
+            pass
 
     # ── Visibilidad ────────────────────────────────────────────────
 

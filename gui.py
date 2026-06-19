@@ -317,9 +317,9 @@ class OrchestratorApp:
         dlg.grab_set()
         frame = ttk.Frame(dlg, padding=15)
         frame.pack(fill=tk.BOTH, expand=True)
-        ttk.Label(frame, text="Nombre del nuevo perfil:", style="Bold.TLabel").pack(pady=(0, 8))
+        ctk.CTkLabel(frame, text="Nombre del nuevo perfil:").pack(pady=(0, 8))
         name_var = tk.StringVar()
-        entry = ttk.Entry(frame, textvariable=name_var, width=24)
+        entry = ctk.CTkEntry(frame, textvariable=name_var, width=24)
         entry.pack(pady=(0, 10))
         entry.focus_set()
         def _create():
@@ -332,7 +332,7 @@ class OrchestratorApp:
             save_config({"playlist": [], "settings": DEFAULT_SETTINGS.copy()}, name)
             dlg.destroy()
             self._save_and_switch(name)
-        ttk.Button(frame, text="Crear", command=_create, style="Compact.TButton").pack()
+        ctk.CTkButton(frame, text="Crear", command=_create).pack()
         entry.bind("<Return>", lambda e: _create())
         dlg.bind("<Escape>", lambda e: dlg.destroy())
         # Center
@@ -354,9 +354,9 @@ class OrchestratorApp:
         dlg.grab_set()
         frame = ttk.Frame(dlg, padding=15)
         frame.pack(fill=tk.BOTH, expand=True)
-        ttk.Label(frame, text=f"Renombrar '{old_name}' a:", style="Bold.TLabel").pack(pady=(0, 8))
+        ctk.CTkLabel(frame, text=f"Renombrar '{old_name}' a:").pack(pady=(0, 8))
         name_var = tk.StringVar(value=old_name)
-        entry = ttk.Entry(frame, textvariable=name_var, width=24)
+        entry = ctk.CTkEntry(frame, textvariable=name_var, width=24)
         entry.pack(pady=(0, 10))
         entry.focus_set()
         entry.select_range(0, tk.END)
@@ -379,7 +379,7 @@ class OrchestratorApp:
                 self._sync_loop_controls()
                 self._update_title()
             dlg.destroy()
-        ttk.Button(frame, text="Renombrar", command=_rename, style="Compact.TButton").pack()
+        ctk.CTkButton(frame, text="Renombrar", command=_rename).pack()
         entry.bind("<Return>", lambda e: _rename())
         dlg.bind("<Escape>", lambda e: dlg.destroy())
         dlg.update_idletasks()
@@ -432,9 +432,9 @@ class OrchestratorApp:
         dlg.grab_set()
         frame = ttk.Frame(dlg, padding=15)
         frame.pack(fill=tk.BOTH, expand=True)
-        ttk.Label(frame, text=f"Clonar '{source}' como:", style="Bold.TLabel").pack(pady=(0, 8))
+        ctk.CTkLabel(frame, text=f"Clonar '{source}' como:").pack(pady=(0, 8))
         name_var = tk.StringVar(value=f"{source} (copia)")
-        entry = ttk.Entry(frame, textvariable=name_var, width=24)
+        entry = ctk.CTkEntry(frame, textvariable=name_var, width=24)
         entry.pack(pady=(0, 10))
         entry.focus_set()
         entry.select_range(0, tk.END)
@@ -451,7 +451,7 @@ class OrchestratorApp:
             if clone_profile(source, new_name):
                 dlg.destroy()
                 self._save_and_switch(new_name)
-        ttk.Button(frame, text="Clonar", command=_clone, style="Compact.TButton").pack()
+        ctk.CTkButton(frame, text="Clonar", command=_clone).pack()
         entry.bind("<Return>", lambda e: _clone())
         dlg.bind("<Escape>", lambda e: dlg.destroy())
         dlg.update_idletasks()
@@ -561,139 +561,144 @@ class OrchestratorApp:
     # ═══════════════════════════════════════════════════════════════
 
     def _setup_dark_theme(self):
-        """Tema oscuro con CustomTkinter + ttk para Treeview."""
+        """Tema oscuro: CTk para widgets modernos + ttk solo para Treeview/Combobox/Spinbox."""
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("dark-blue")
 
-        # ── CustomTkinter global widget defaults ──
-        # CTk usa su propio tema; solo ajustamos corner_radius global
+        # ── CustomTkinter global defaults (compactos, dark, sin alpha en hex) ──
         try:
-            # Aplicar corner_radius default a todos los CTkFrames
             from customtkinter import ThemeManager
+            # Frames
             ThemeManager.theme["CTkFrame"]["corner_radius"] = 6
+            # Buttons
             ThemeManager.theme["CTkButton"]["corner_radius"] = 6
-            ThemeManager.theme["CTkEntry"]["corner_radius"] = 4
+            ThemeManager.theme["CTkButton"]["height"] = 28
+            ThemeManager.theme["CTkButton"]["font"] = ("Segoe UI", 9)
             ThemeManager.theme["CTkButton"]["border_width"] = 1
-            ThemeManager.theme["CTkButton"]["border_color"] = ["#3a7ebf80", "#1f538d80"]
+            ThemeManager.theme["CTkButton"]["border_color"] = ["#3a3a3a", "#2a2a2a"]
+            ThemeManager.theme["CTkButton"]["fg_color"] = ["#1a1a1a", "#141414"]
+            ThemeManager.theme["CTkButton"]["hover_color"] = ["#2a2a2a", "#1a1a1a"]
+            ThemeManager.theme["CTkButton"]["text_color"] = "#e0e0e0"
+            # Entries
+            ThemeManager.theme["CTkEntry"]["corner_radius"] = 4
+            ThemeManager.theme["CTkEntry"]["border_width"] = 1
+            ThemeManager.theme["CTkEntry"]["fg_color"] = ["#212121", "#1a1a1a"]
+            ThemeManager.theme["CTkEntry"]["text_color"] = "#e0e0e0"
+            ThemeManager.theme["CTkEntry"]["border_color"] = ["#3a3a3a", "#2a2a2a"]
+            # Checkboxes
+            ThemeManager.theme["CTkCheckBox"]["corner_radius"] = 3
+            ThemeManager.theme["CTkCheckBox"]["border_width"] = 2
+            ThemeManager.theme["CTkCheckBox"]["fg_color"] = ["#1f538d", "#14375e"]
+            ThemeManager.theme["CTkCheckBox"]["border_color"] = ["#3a3a3a", "#2a2a2a"]
+            ThemeManager.theme["CTkCheckBox"]["checkmark_color"] = "#ffffff"
+            ThemeManager.theme["CTkCheckBox"]["text_color"] = "#e0e0e0"
+            ThemeManager.theme["CTkCheckBox"]["hover_color"] = ["#2a2a2a", "#1a1a1a"]
+            # ProgressBar
+            ThemeManager.theme["CTkProgressBar"]["corner_radius"] = 2
+            ThemeManager.theme["CTkProgressBar"]["fg_color"] = ["#1f538d", "#14375e"]
+            ThemeManager.theme["CTkProgressBar"]["progress_color"] = ["#1f538d", "#14375e"]
         except Exception:
             pass
 
         c = DARK_COLORS
         style = ttk.Style()
-        # Use clam theme — fully custom-drawn, respects background/foreground colors
-        # (Windows default themes ignore custom widget colors)
         try:
             style.theme_use("clam")
         except tk.TclError:
-            pass  # fallback to default if clam not available
+            pass
 
-        # ── Treeview (sigue siendo ttk, colores sincronizados) ──
+        # ── Treeview (ttk — optimizado para lectura) ──
         style.configure("Treeview",
-                        background=c["surface_alt"], foreground=c["text"],
-                        fieldbackground=c["surface_alt"], borderwidth=0)
+                        background=c["surface_alt"],
+                        foreground=c["text"],
+                        fieldbackground=c["surface_alt"],
+                        borderwidth=0,
+                        rowheight=24)
         style.configure("Treeview.Heading",
-                        background=c["surface"], foreground=c["text"],
-                        borderwidth=1, bordercolor=c["border"], padding=4,
-                        font=("Segoe UI", 9, "bold"))
+                        background=c["surface"],
+                        foreground=c["text_dim"],
+                        borderwidth=0,
+                        relief="flat",
+                        padding=(8, 4),
+                        font=("Segoe UI", 8, "bold"))
         style.map("Treeview.Heading",
-                  background=[("active", c["accent"])],
-                  foreground=[("active", "#ffffff")])
+                  background=[("active", c["surface_alt"])],
+                  foreground=[("active", c["text"])])
         style.map("Treeview",
                   background=[("selected", c["accent"])],
                   foreground=[("selected", "#ffffff")])
 
-        # ── Scrollbar (ttk para Treeview) ──
-        style.configure("TScrollbar", background=c["surface"],
-                        troughcolor=c["bg"], bordercolor=c["bg"],
-                        arrowcolor=c["text_dim"], borderwidth=0)
+        # ── Scrollbar (ttk — estilizado moderno, sin flechas) ──
+        style.configure("TScrollbar",
+                        background=c["surface_alt"],
+                        troughcolor=c["surface"],
+                        bordercolor=c["bg"],
+                        arrowcolor=c["surface_alt"],
+                        relief="flat", borderwidth=0, arrowsize=14)
         style.map("TScrollbar",
-                  background=[("active", c["surface_alt"])])
+                  background=[("active", c["border"])],
+                  arrowcolor=[("active", c["text_dim"])])
 
         # ── Separator ──
         style.configure("TSeparator", background=c["border"])
 
-        # ── LabelFrame (ttk, se usa en editor de condiciones) ──
+        # ── LabelFrame (ttk — editor de condiciones) ──
         style.configure("TLabelframe", background=c["bg"], foreground=c["text"],
                         bordercolor=c["border"], borderwidth=1)
         style.configure("TLabelframe.Label", background=c["bg"], foreground=c["text"],
                         font=("Segoe UI", 9, "bold"))
 
-        # ── Combobox / Spinbox (ttk) ──
-        style.configure("TCombobox", fieldbackground=c["surface_alt"],
-                        foreground=c["text"], background=c["surface_alt"],
-                        arrowcolor=c["text"], bordercolor=c["border"])
+        # ── Combobox / Spinbox (ttk — estilizado moderno) ──
+        style.configure("TCombobox",
+                        fieldbackground=c["surface_alt"],
+                        foreground=c["text"],
+                        background=c["surface_alt"],
+                        arrowcolor=c["text_dim"],
+                        bordercolor=c["border"],
+                        borderwidth=1, relief="solid",
+                        padding=(10, 4))
         style.map("TCombobox",
                   fieldbackground=[("readonly", c["surface_alt"]),
-                                  ("focus", c["surface"]),
-                                  ("active", c["surface"])],
+                                  ("focus", c["surface_alt"]),
+                                  ("active", c["surface_alt"])],
                   foreground=[("readonly", c["text"]),
+                             ("focus", c["text"]),
+                             ("active", c["text"])],
+                  arrowcolor=[("active", c["text"]),
                              ("focus", c["text"])],
+                  bordercolor=[("focus", c["accent"]),
+                              ("active", c["accent"])],
                   selectbackground=[("readonly", c["accent"])],
                   selectforeground=[("readonly", "#ffffff")])
-        # Force the Combobox dropdown list to use dark colors
         self.root.option_add("*TCombobox*Listbox.background", c["surface_alt"])
         self.root.option_add("*TCombobox*Listbox.foreground", c["text"])
         self.root.option_add("*TCombobox*Listbox.selectBackground", c["accent"])
         self.root.option_add("*TCombobox*Listbox.selectForeground", "#ffffff")
-        style.configure("TSpinbox", fieldbackground=c["surface_alt"],
-                        foreground=c["text"], bordercolor=c["border"],
-                        borderwidth=1, arrowcolor=c["text"],
-                        background=c["surface_alt"])
+        self.root.option_add("*TCombobox*Listbox.font", ("Segoe UI", 9))
+        style.configure("TSpinbox",
+                        fieldbackground=c["surface_alt"],
+                        foreground=c["text"],
+                        bordercolor=c["border"],
+                        borderwidth=1, relief="solid",
+                        arrowcolor=c["text_dim"],
+                        background=c["surface_alt"],
+                        padding=(6, 3))
         style.map("TSpinbox",
                   fieldbackground=[("disabled", c["surface_alt"]),
                                   ("readonly", c["surface_alt"])],
                   foreground=[("disabled", c["text_dim"]),
-                             ("readonly", c["text"])],
+                             ("readonly", c["text"]),
+                             ("focus", c["text"]),
+                             ("active", c["text"])],
+                  bordercolor=[("focus", c["accent"]),
+                              ("active", c["accent"])],
+                  arrowcolor=[("active", c["text"]),
+                             ("focus", c["text"])],
                   background=[("disabled", c["surface_alt"]),
                              ("readonly", c["surface_alt"])])
 
-        # ── Compact styles (para ttk fallback) ──
-        style.configure("Compact.TButton", padding=4, font=("Segoe UI", 9),
-                        background=c["surface"], foreground=c["text"],
-                        borderwidth=1, bordercolor=c["border"])
-        style.map("Compact.TButton",
-                  background=[("active", c["accent"]), ("pressed", c["accent_hover"])],
-                  foreground=[("active", "#ffffff"), ("pressed", "#ffffff")])
-        style.configure("Dim.TLabel", foreground=c["text_dim"], background=c["bg"])
-        style.configure("Bold.TLabel", foreground=c["text"], background=c["bg"],
-                        font=("Segoe UI", 10, "bold"))
-        style.configure("TLabel", background=c["bg"], foreground=c["text"])
+        # ── Frame (ttk) ──
         style.configure("TFrame", background=c["bg"])
-
-        # ── Entry (campos de texto) ──
-        style.configure("TEntry", fieldbackground=c["surface_alt"],
-                        foreground=c["text"], bordercolor=c["border"],
-                        borderwidth=1)
-
-        # ── Progressbar ──
-        style.configure("TProgressbar", background=c["accent"],
-                        troughcolor=c["surface_alt"], bordercolor=c["border"],
-                        darkcolor=c["accent"], lightcolor=c["accent"])
-
-        # ── Base Button style (fallback for all ttk buttons) ──
-        style.configure("TButton", background=c["surface"],
-                        foreground=c["text"], borderwidth=1,
-                        bordercolor=c["border"], padding=4,
-                        font=("Segoe UI", 9))
-        style.map("TButton",
-                  background=[("active", c["accent"]), ("pressed", c["accent_hover"]),
-                             ("disabled", c["surface_alt"])],
-                  foreground=[("active", "#ffffff"), ("pressed", "#ffffff"),
-                             ("disabled", c["text_dim"])])
-
-        # ── Checkbutton / Radiobutton ──
-        style.configure("TCheckbutton", background=c["bg"],
-                        foreground=c["text"])
-        style.map("TCheckbutton",
-                  background=[("active", c["bg"]), ("selected", c["bg"]),
-                             ("disabled", c["bg"])],
-                  foreground=[("disabled", c["text_dim"])])
-        style.configure("TRadiobutton", background=c["bg"],
-                        foreground=c["text"])
-        style.map("TRadiobutton",
-                  background=[("active", c["bg"]), ("selected", c["bg"]),
-                             ("disabled", c["bg"])],
-                  foreground=[("disabled", c["text_dim"])])
 
         # ── Menubar (fallback si CTk no lo cubre) ──
         style.configure("TMenubutton", background=c["menu_bg"],
@@ -706,7 +711,7 @@ class OrchestratorApp:
         profile_frame = ttk.LabelFrame(self.root, text=" Perfil ", padding=3)
         profile_frame.pack(fill=tk.X, padx=5, pady=(5, 0))
 
-        ttk.Label(profile_frame, text="Activo:", style="Compact.TLabel").pack(side=tk.LEFT, padx=(0, 4))
+        ctk.CTkLabel(profile_frame, text="Activo:").pack(side=tk.LEFT, padx=(0, 4))
         self.profile_var = tk.StringVar(value=self._current_profile)
         self.profile_combo = ttk.Combobox(
             profile_frame,
@@ -717,20 +722,20 @@ class OrchestratorApp:
         self.profile_combo.pack(side=tk.LEFT, padx=2)
         self.profile_combo.bind("<<ComboboxSelected>>", self._on_profile_switch)
 
-        ttk.Button(profile_frame, text="+", width=2, style="Compact.TButton",
+        ctk.CTkButton(profile_frame, text="+", width=26,
                    command=self._new_profile).pack(side=tk.LEFT, padx=(6, 1))
-        ttk.Button(profile_frame, text="✎", width=2, style="Compact.TButton",
+        ctk.CTkButton(profile_frame, text="✎", width=26,
                    command=self._rename_profile).pack(side=tk.LEFT, padx=1)
-        ttk.Button(profile_frame, text="🗑", width=2, style="Compact.TButton",
+        ctk.CTkButton(profile_frame, text="🗑", width=26,
                    command=self._delete_profile).pack(side=tk.LEFT, padx=1)
-        ttk.Button(profile_frame, text="⧉", width=2, style="Compact.TButton",
+        ctk.CTkButton(profile_frame, text="⧉", width=26,
                    command=self._clone_profile).pack(side=tk.LEFT, padx=1)
 
         # ===== Frame Configuración del Loop (compacto) =====
         loop_frame = ttk.LabelFrame(self.root, text=" Loop ", padding=5)
         loop_frame.pack(fill=tk.X, padx=5, pady=(5, 3))
 
-        ttk.Label(loop_frame, text="Modo:", style="Compact.TLabel").pack(side=tk.LEFT, padx=(0, 3))
+        ctk.CTkLabel(loop_frame, text="Modo:").pack(side=tk.LEFT, padx=(0, 3))
         self.loop_mode_var = tk.StringVar(value=self.settings.get("loop_mode", "once"))
         mode_combo = ttk.Combobox(
             loop_frame,
@@ -741,21 +746,21 @@ class OrchestratorApp:
         mode_combo.pack(side=tk.LEFT, padx=2)
         mode_combo.bind("<<ComboboxSelected>>", self._on_loop_mode_change)
 
-        ttk.Label(loop_frame, text="×", style="Compact.TLabel").pack(side=tk.LEFT, padx=(8, 3))
+        ctk.CTkLabel(loop_frame, text="×").pack(side=tk.LEFT, padx=(8, 3))
         self.loop_count_var = tk.StringVar(value=str(self.settings.get("loop_count", 1)))
-        self.loop_count_entry = ttk.Entry(loop_frame, textvariable=self.loop_count_var, width=6, validate="key")
-        self.loop_count_entry.config(validatecommand=(self.root.register(self._validate_int_positive), "%P"))
+        self.loop_count_entry = ctk.CTkEntry(loop_frame, textvariable=self.loop_count_var, width=60, validate="key")
+        self.loop_count_entry.configure(validatecommand=(self.root.register(self._validate_int_positive), "%P"))
         self.loop_count_entry.pack(side=tk.LEFT, padx=2)
 
-        ttk.Label(loop_frame, text="Pausa:", style="Compact.TLabel").pack(side=tk.LEFT, padx=(10, 3))
+        ctk.CTkLabel(loop_frame, text="Pausa:").pack(side=tk.LEFT, padx=(10, 3))
         self.loop_delay_var = tk.StringVar(value=str(self.settings.get("loop_delay", 0)))
-        self.loop_delay_entry = ttk.Entry(loop_frame, textvariable=self.loop_delay_var, width=5, validate="key")
-        self.loop_delay_entry.config(validatecommand=(self.root.register(self._validate_int_non_negative), "%P"))
+        self.loop_delay_entry = ctk.CTkEntry(loop_frame, textvariable=self.loop_delay_var, width=50, validate="key")
+        self.loop_delay_entry.configure(validatecommand=(self.root.register(self._validate_int_non_negative), "%P"))
         self.loop_delay_entry.pack(side=tk.LEFT, padx=2)
-        ttk.Label(loop_frame, text="s", style="Dim.TLabel").pack(side=tk.LEFT)
+        ctk.CTkLabel(loop_frame, text="s").pack(side=tk.LEFT)
 
         # Tiempo estimado total
-        self.total_time_label = ttk.Label(loop_frame, text="Total: 0s", style="Dim.TLabel")
+        self.total_time_label = ctk.CTkLabel(loop_frame, text="Total: 0s")
         self.total_time_label.pack(side=tk.RIGHT, padx=5)
 
         self._on_loop_mode_change(None)
@@ -802,7 +807,7 @@ class OrchestratorApp:
         self.tree.bind("<<TreeviewClose>>", self._on_group_expand_collapse)
         self._inline_entry = None
 
-        vsb = ttk.Scrollbar(list_frame, orient="vertical", command=self.tree.yview)
+        vsb = ttk.Scrollbar(list_frame, command=self.tree.yview)
         self.tree.configure(yscrollcommand=vsb.set)
 
         # Ensure treeview respects its container height (don't expand to show all rows)
@@ -818,25 +823,25 @@ class OrchestratorApp:
         btn_frame = ttk.Frame(self.root)
         btn_frame.pack(fill=tk.X, padx=5, pady=(0, 3))
 
-        ttk.Button(btn_frame, text="🎬 Macro", command=self._add_macro, style="Compact.TButton").pack(
+        ctk.CTkButton(btn_frame, text="🎬 Macro", command=self._add_macro).pack(
             side=tk.LEFT, padx=2
         )
-        ttk.Button(btn_frame, text="➕ Agregar", command=self._add_script, style="Compact.TButton").pack(
+        ctk.CTkButton(btn_frame, text="➕ Agregar", command=self._add_script).pack(
             side=tk.LEFT, padx=2
         )
-        ttk.Button(btn_frame, text="✏️ Editar", command=self._edit_script, style="Compact.TButton").pack(
+        ctk.CTkButton(btn_frame, text="✏️ Editar", command=self._edit_script).pack(
             side=tk.LEFT, padx=2
         )
-        ttk.Button(btn_frame, text="📋 Clonar", command=self._clone_script, style="Compact.TButton").pack(
+        ctk.CTkButton(btn_frame, text="📋 Clonar", command=self._clone_script).pack(
             side=tk.LEFT, padx=2
         )
-        ttk.Button(btn_frame, text="🗑️ Quitar", command=self._remove_script, style="Compact.TButton").pack(
+        ctk.CTkButton(btn_frame, text="🗑️ Quitar", command=self._remove_script).pack(
             side=tk.LEFT, padx=2
         )
-        ttk.Button(btn_frame, text="⬆", command=self._move_up, style="Compact.TButton", width=3).pack(
+        ctk.CTkButton(btn_frame, text="⬆", command=self._move_up, width=30).pack(
             side=tk.LEFT, padx=(8, 1)
         )
-        ttk.Button(btn_frame, text="⬇", command=self._move_down, style="Compact.TButton", width=3).pack(
+        ctk.CTkButton(btn_frame, text="⬇", command=self._move_down, width=30).pack(
             side=tk.LEFT, padx=1
         )
 
@@ -844,13 +849,13 @@ class OrchestratorApp:
         group_btn_frame = ttk.Frame(self.root)
         group_btn_frame.pack(fill=tk.X, padx=5, pady=(0, 3))
 
-        ttk.Button(group_btn_frame, text="📁 Agrupar", command=self._group_selected, style="Compact.TButton").pack(
+        ctk.CTkButton(group_btn_frame, text="📁 Agrupar", command=self._group_selected).pack(
             side=tk.LEFT, padx=2
         )
-        ttk.Button(group_btn_frame, text="✂️ Desagrupar", command=self._ungroup_selected, style="Compact.TButton").pack(
+        ctk.CTkButton(group_btn_frame, text="✂️ Desagrupar", command=self._ungroup_selected).pack(
             side=tk.LEFT, padx=2
         )
-        ttk.Button(group_btn_frame, text="🏷️ Renombrar", command=self._rename_group, style="Compact.TButton").pack(
+        ctk.CTkButton(group_btn_frame, text="🏷️ Renombrar", command=self._rename_group).pack(
             side=tk.LEFT, padx=2
         )
 
@@ -872,27 +877,27 @@ class OrchestratorApp:
         progress_frame = ttk.Frame(exec_frame)
         progress_frame.pack(fill=tk.X, pady=2)
 
-        self.progress = ttk.Progressbar(
-            progress_frame, orient=tk.HORIZONTAL, mode="determinate"
+        self.progress = ctk.CTkProgressBar(
+            progress_frame, mode="determinate"
         )
         self.progress.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        self.progress_pct_label = ttk.Label(progress_frame, text="0%", width=5, style="Compact.TLabel")
+        self.progress_pct_label = ctk.CTkLabel(progress_frame, text="0%", width=35)
         self.progress_pct_label.pack(side=tk.LEFT, padx=(3, 0))
 
         # Botones de acción
-        ttk.Button(exec_frame, text="▶ Iniciar", command=self._start, style="Compact.TButton").pack(
+        ctk.CTkButton(exec_frame, text="▶ Iniciar", command=self._start).pack(
             side=tk.LEFT, padx=2
         )
-        ttk.Button(exec_frame, text="▶1 Seleccionado", command=self._run_selected, style="Compact.TButton").pack(
+        ctk.CTkButton(exec_frame, text="▶1 Seleccionado", command=self._run_selected).pack(
             side=tk.LEFT, padx=2
         )
-        ttk.Button(exec_frame, text="⏹ Detener", command=self._stop, style="Compact.TButton").pack(
+        ctk.CTkButton(exec_frame, text="⏹ Detener", command=self._stop).pack(
             side=tk.LEFT, padx=2
         )
 
         # Hotkey configurable
-        ttk.Label(exec_frame, text="Hotkey:", style="Compact.TLabel").pack(side=tk.LEFT, padx=(10, 3))
+        ctk.CTkLabel(exec_frame, text="Hotkey:").pack(side=tk.LEFT, padx=(10, 3))
         self.hotkey_var = tk.StringVar(value=self.hotkey_var_set_to)
         hotkey_combo = ttk.Combobox(
             exec_frame,
@@ -901,11 +906,11 @@ class OrchestratorApp:
             width=4,
             state="readonly")
         hotkey_combo.pack(side=tk.LEFT, padx=2)
-        ttk.Label(exec_frame, text="(solo ▶ Iniciar todo / ⏹ Detener)", style="Dim.TLabel").pack(side=tk.LEFT, padx=(3, 0))
+        ctk.CTkLabel(exec_frame, text="(solo ▶ Iniciar todo / ⏹ Detener)").pack(side=tk.LEFT, padx=(3, 0))
         hotkey_combo.bind("<<ComboboxSelected>>", self._on_hotkey_change)
 
         # Countdown timer
-        self.countdown_label = ttk.Label(exec_frame, text="⏱ --:--", style="Bold.TLabel")
+        self.countdown_label = ctk.CTkLabel(exec_frame, text="⏱ --:--")
         self.countdown_label.pack(side=tk.RIGHT, padx=5)
 
     # ═══════════════════════════════════════════════════════════════
@@ -1020,16 +1025,16 @@ class OrchestratorApp:
     def _update_time_labels(self):
         total = self._calc_total_time()
         if total is None:
-            self.total_time_label.config(text="Total: ∞")
+            self.total_time_label.configure(text="Total: ∞")
         else:
-            self.total_time_label.config(text=f"Total: {format_time(total)}")
+            self.total_time_label.configure(text=f"Total: {format_time(total)}")
 
     def _on_loop_mode_change(self, event):
         mode = self.loop_mode_var.get()
         if mode == "infinite" or mode == "first_match":
-            self.loop_count_entry.config(state="disabled")
+            self.loop_count_entry.configure(state="disabled")
         else:
-            self.loop_count_entry.config(state="normal")
+            self.loop_count_entry.configure(state="normal")
         self._update_time_labels()
 
     # ═══════════════════════════════════════════════════════════════
@@ -1251,10 +1256,24 @@ class OrchestratorApp:
         x, y, width, height = bbox
 
         # Create entry overlay on the cell
-        entry = ttk.Entry(self.tree, justify="center")
+        # Use tk.Entry (not CTkEntry) for reliable overlay on ttk.Treeview.
+        # CTkEntry as child of Treeview can have rendering/z-order issues
+        # after the clam theme borderwidth=0 + rowheight changes.
+        c = DARK_COLORS
+        entry = tk.Entry(
+            self.tree,
+            justify="center",
+            bg=c["surface_alt"],
+            fg=c["text"],
+            insertbackground=c["text"],
+            relief="flat",
+            borderwidth=0,
+            font=("Segoe UI", 10),
+        )
         entry.place(x=x, y=y, width=width, height=height)
         entry.insert(0, str(current_value))
         entry.select_range(0, tk.END)
+        entry.lift()  # ensure z-order above Treeview internal canvas
         entry.focus_set()
         self._inline_entry = entry
 
@@ -1456,7 +1475,7 @@ class OrchestratorApp:
         frame = ttk.Frame(dlg, padding=15)
         frame.pack(fill=tk.BOTH, expand=True)
 
-        ttk.Label(frame, text=message, style="Bold.TLabel",
+        ctk.CTkLabel(frame, text=message,
                   wraplength=350, justify=tk.CENTER).pack(pady=(5, 12))
 
         btn = ctk.CTkButton(frame, text="  Aceptar  ",
@@ -1489,7 +1508,7 @@ class OrchestratorApp:
         frame = ttk.Frame(dlg, padding=15)
         frame.pack(fill=tk.BOTH, expand=True)
 
-        ttk.Label(frame, text=message, style="Bold.TLabel",
+        ctk.CTkLabel(frame, text=message,
                   wraplength=350, justify=tk.CENTER).pack(pady=(5, 12))
 
         result = tk.BooleanVar(value=False)
@@ -1574,19 +1593,15 @@ class OrchestratorApp:
 
         dlg = ctk.CTkToplevel(self.root, fg_color=DARK_COLORS["bg"])
         dlg.title(f"Condiciones — {name}")
-        dlg.geometry("750x620")
-        dlg.resizable(False, False)
+        dlg.minsize(700, 500)
         dlg.transient(self.root)
         dlg.grab_set()
         dlg.lift()
         _apply_dark_titlebar(dlg, retries=3)
 
-        # Centrar sobre la ventana principal
-        dlg.update_idletasks()
-        pw, ph = self.root.winfo_width(), self.root.winfo_height()
-        px, py = self.root.winfo_x(), self.root.winfo_y()
-        dw, dh = dlg.winfo_width(), dlg.winfo_height()
-        dlg.geometry(f"750x620+{px + (pw - dw)//2}+{py + (ph - dh)//2}")
+        # Restore saved geometry or default + center
+        self._restore_win_geometry(dlg, "condition_editor_geometry", "750x620")
+        self._bind_geo_save(dlg, "condition_editor_geometry")
 
         pad = {"padx": 8, "pady": 4}
         c = DARK_COLORS
@@ -1594,7 +1609,7 @@ class OrchestratorApp:
         # ── Modo AND/OR ──
         mode_frame = ttk.Frame(dlg)
         mode_frame.pack(fill=tk.X, **pad)
-        ttk.Label(mode_frame, text="Modo:").pack(side=tk.LEFT)
+        ctk.CTkLabel(mode_frame, text="Modo:").pack(side=tk.LEFT)
         mode_var = tk.StringVar(value=cond_copy["mode"])
         mode_combo = ttk.Combobox(mode_frame, textvariable=mode_var,
                                   values=["and", "or"], width=6, state="readonly")
@@ -1605,8 +1620,7 @@ class OrchestratorApp:
             "or":  "✅ AL MENOS UNA condición debe cumplirse para ejecutar",
         }
 
-        mode_hint = ttk.Label(mode_frame, text=mode_help.get(cond_copy["mode"], ""),
-                              style="Dim.TLabel")
+        mode_hint = ctk.CTkLabel(mode_frame, text=mode_help.get(cond_copy["mode"], ""))
         mode_hint.pack(side=tk.LEFT)
 
         def _on_mode_change(*_args):
@@ -1617,7 +1631,7 @@ class OrchestratorApp:
         # ── Acción (requerir vs repetir hasta) ──
         action_frame = ttk.Frame(dlg)
         action_frame.pack(fill=tk.X, **pad)
-        ttk.Label(action_frame, text="Acción:").pack(side=tk.LEFT)
+        ctk.CTkLabel(action_frame, text="Acción:").pack(side=tk.LEFT)
         action_var = tk.StringVar(value=cond_copy["action"])
         action_combo = ttk.Combobox(action_frame, textvariable=action_var,
                                      values=["require", "repeat_until"],
@@ -1627,9 +1641,8 @@ class OrchestratorApp:
             "require": "✅ Requerir — solo ejecutar si se cumplen",
             "repeat_until": "🔄 Repetir hasta — ejecutar hasta que se cumplan",
         }
-        action_hint = ttk.Label(action_frame,
-                                 text=action_labels.get(cond_copy["action"], ""),
-                                 style="Dim.TLabel")
+        action_hint = ctk.CTkLabel(action_frame,
+                                 text=action_labels.get(cond_copy["action"], ""))
         action_hint.pack(side=tk.LEFT)
 
         def _on_action_change(*_args):
@@ -1645,7 +1658,7 @@ class OrchestratorApp:
         ru_stop_var = tk.StringVar(value=cond_copy["repeat"]["stop_when"])
         ru_stop_row = ttk.Frame(ru_frame)
         ru_stop_row.pack(fill=tk.X)
-        ttk.Label(ru_stop_row, text="Detener al:").pack(side=tk.LEFT)
+        ctk.CTkLabel(ru_stop_row, text="Detener al:").pack(side=tk.LEFT)
         ttk.Radiobutton(ru_stop_row, text="Encontrar", variable=ru_stop_var,
                         value="match").pack(side=tk.LEFT, padx=(4, 0))
         ttk.Radiobutton(ru_stop_row, text="Desaparecer", variable=ru_stop_var,
@@ -1654,17 +1667,16 @@ class OrchestratorApp:
         ru_max_var = tk.IntVar(value=cond_copy["repeat"]["max_iterations"])
         ru_max_row = ttk.Frame(ru_frame)
         ru_max_row.pack(fill=tk.X, pady=(4, 0))
-        ttk.Label(ru_max_row, text="Máx. intentos:").pack(side=tk.LEFT)
+        ctk.CTkLabel(ru_max_row, text="Máx. intentos:").pack(side=tk.LEFT)
         ttk.Spinbox(ru_max_row, from_=0, to=99999,
                     textvariable=ru_max_var, width=8).pack(side=tk.LEFT, padx=4)
-        ttk.Label(ru_max_row, text="(0=sin límite)",
-                  style="Dim.TLabel").pack(side=tk.LEFT)
+        ctk.CTkLabel(ru_max_row, text="(0=sin límite)").pack(side=tk.LEFT)
 
         ru_interval_var = tk.DoubleVar(
             value=cond_copy["repeat"]["check_interval"])
         ru_interval_row = ttk.Frame(ru_frame)
         ru_interval_row.pack(fill=tk.X, pady=(4, 0))
-        ttk.Label(ru_interval_row,
+        ctk.CTkLabel(ru_interval_row,
                   text="Intervalo de verificación (s):").pack(side=tk.LEFT)
         ttk.Spinbox(ru_interval_row, from_=0.1, to=60.0,
                     increment=0.1,
@@ -1697,7 +1709,7 @@ class OrchestratorApp:
         tree.column("umbral", width=60, anchor="center")
         tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        vsb = ttk.Scrollbar(list_frame, orient="vertical", command=tree.yview)
+        vsb = ttk.Scrollbar(list_frame, command=tree.yview)
         tree.configure(yscrollcommand=vsb.set)
         vsb.pack(side=tk.RIGHT, fill=tk.Y)
 
@@ -1847,7 +1859,7 @@ class OrchestratorApp:
             sel_win.configure(bg="#1e1e2e")
             sel_win.resizable(False, False)
 
-            ttk.Label(sel_win, text="¿De qué monitor capturar?",
+            ctk.CTkLabel(sel_win, text="¿De qué monitor capturar?",
                       font=("Segoe UI", 11, "bold"),
                       background="#1e1e2e", foreground="#cdd6f4").pack(
                           pady=(15, 10), padx=30)
@@ -1858,7 +1870,7 @@ class OrchestratorApp:
             for i in range(1, num_physical + 1):
                 m = monitors[i]
                 size = f"{m['width']}×{m['height']}"
-                btn = ttk.Button(btn_row,
+                btn = ctk.CTkButton(btn_row,
                     text=f"Monitor {i}\n({size})",
                     command=lambda m=m: [_do_capture(m), sel_win.destroy()])
                 btn.pack(side=tk.LEFT, padx=5)
@@ -1911,7 +1923,7 @@ class OrchestratorApp:
                 lbl_win.transient(dlg)
                 lbl_win.grab_set()
                 lbl_var = tk.StringVar(value=cond_copy["items"][i].get("label", ""))
-                entry = ttk.Entry(lbl_win, textvariable=lbl_var, width=30)
+                entry = ctk.CTkEntry(lbl_win, textvariable=lbl_var, width=30)
                 entry.pack(padx=10, pady=(10, 5))
                 entry.select_range(0, tk.END)
                 entry.focus_set()
@@ -1922,16 +1934,12 @@ class OrchestratorApp:
                     _refresh_cond_list()
 
                 entry.bind("<Return>", lambda e: _save_label())
-                ttk.Button(lbl_win, text="Guardar", command=_save_label).pack()
+                ctk.CTkButton(lbl_win, text="Guardar", command=_save_label).pack()
 
-        ttk.Button(btn_frame, text="➕ Agregar", command=_add_condition,
-                   style="Compact.TButton").pack(side=tk.LEFT, padx=2)
-        ttk.Button(btn_frame, text="🗑️ Quitar", command=_remove_condition,
-                   style="Compact.TButton").pack(side=tk.LEFT, padx=2)
-        ttk.Button(btn_frame, text="🔄 Cambiar tipo", command=_toggle_type,
-                   style="Compact.TButton").pack(side=tk.LEFT, padx=2)
-        ttk.Button(btn_frame, text="🏷️ Etiqueta", command=_edit_label,
-                   style="Compact.TButton").pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame, text="➕ Agregar", command=_add_condition).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame, text="🗑️ Quitar", command=_remove_condition).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame, text="🔄 Cambiar tipo", command=_toggle_type).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame, text="🏷️ Etiqueta", command=_edit_label).pack(side=tk.LEFT, padx=2)
 
         def _edit_threshold():
             """Editar la tolerancia de la condición seleccionada."""
@@ -1949,7 +1957,7 @@ class OrchestratorApp:
                 thr_var = tk.DoubleVar(value=current)
                 row = ttk.Frame(thr_win)
                 row.pack(padx=10, pady=(10, 5))
-                ttk.Label(row, text="Tolerancia (0-1):").pack(side=tk.LEFT)
+                ctk.CTkLabel(row, text="Tolerancia (0-1):").pack(side=tk.LEFT)
                 ttk.Spinbox(row, from_=0.01, to=1.0, increment=0.01,
                             textvariable=thr_var, width=6).pack(side=tk.LEFT, padx=4)
 
@@ -1958,7 +1966,7 @@ class OrchestratorApp:
                     thr_win.destroy()
                     _refresh_cond_list()
 
-                ttk.Button(thr_win, text="Guardar", command=_save_thr).pack()
+                ctk.CTkButton(thr_win, text="Guardar", command=_save_thr).pack()
                 thr_win.bind("<Return>", lambda e: _save_thr())
                 # Center on conditions dialog
                 thr_win.update_idletasks()
@@ -1966,8 +1974,7 @@ class OrchestratorApp:
                 pdy = dlg.winfo_rooty() + (dlg.winfo_height() - thr_win.winfo_height()) // 2
                 thr_win.geometry(f"+{pdx}+{pdy}")
 
-        ttk.Button(btn_frame, text="🎯 Tolerancia", command=_edit_threshold,
-                   style="Compact.TButton").pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame, text="🎯 Tolerancia", command=_edit_threshold).pack(side=tk.LEFT, padx=2)
 
         # ── Botón Muestreo ──
         def _edit_sampling():
@@ -1988,20 +1995,19 @@ class OrchestratorApp:
             cur_samples = cond_copy["items"][i].get("samples", 1)
             cur_conf = cond_copy["items"][i].get("confidence", 1.0)
 
-            ttk.Label(smp_win, text="Verificar N veces:", style="Compact.TLabel").pack(pady=(10, 2))
+            ctk.CTkLabel(smp_win, text="Verificar N veces:").pack(pady=(10, 2))
             samples_var = tk.IntVar(value=cur_samples)
             ttk.Spinbox(smp_win, from_=1, to=20, width=6,
                         textvariable=samples_var).pack()
 
-            ttk.Label(smp_win, text="Aceptar si ≥ X% matchea:", style="Compact.TLabel").pack(pady=(10, 2))
+            ctk.CTkLabel(smp_win, text="Aceptar si ≥ X% matchea:").pack(pady=(10, 2))
             conf_pct_var = tk.IntVar(value=int(cur_conf * 100))
             ttk.Spinbox(smp_win, from_=10, to=100, increment=10, width=6,
                         textvariable=conf_pct_var).pack()
-            ttk.Label(smp_win, text="%", style="Compact.TLabel").pack()
+            ctk.CTkLabel(smp_win, text="%").pack()
 
-            ttk.Label(smp_win,
-                text=f"Ej: 5 veces al 60% → necesita 3+ aciertos",
-                style="Dim.TLabel").pack(pady=(6, 0))
+            ctk.CTkLabel(smp_win,
+                text=f"Ej: 5 veces al 60% → necesita 3+ aciertos").pack(pady=(6, 0))
 
             def _save_smp():
                 cond_copy["items"][i]["samples"] = samples_var.get()
@@ -2009,15 +2015,14 @@ class OrchestratorApp:
                 smp_win.destroy()
                 _refresh_cond_list()
 
-            ttk.Button(smp_win, text="Guardar", command=_save_smp).pack(pady=8)
+            ctk.CTkButton(smp_win, text="Guardar", command=_save_smp).pack(pady=8)
             smp_win.bind("<Return>", lambda e: _save_smp())
             smp_win.update_idletasks()
             pdx = dlg.winfo_rootx() + (dlg.winfo_width() - smp_win.winfo_width()) // 2
             pdy = dlg.winfo_rooty() + (dlg.winfo_height() - smp_win.winfo_height()) // 2
             smp_win.geometry(f"+{pdx}+{pdy}")
 
-        ttk.Button(btn_frame, text="📊 Muestreo", command=_edit_sampling,
-                   style="Compact.TButton").pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame, text="📊 Muestreo", command=_edit_sampling).pack(side=tk.LEFT, padx=2)
 
         def _preview_icon():
             """Abrir la imagen del icono seleccionado con el visor del sistema."""
@@ -2033,8 +2038,7 @@ class OrchestratorApp:
                     self._dark_dialog("Icono no encontrado",
                         f"El archivo no existe:\n{ipath}", "warning")
 
-        ttk.Button(btn_frame, text="👁️ Ver", command=_preview_icon,
-                   style="Compact.TButton").pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame, text="👁️ Ver", command=_preview_icon).pack(side=tk.LEFT, padx=2)
 
         # ── Botón Probar (diagnóstico) ──
         def _test_icon():
@@ -2135,8 +2139,7 @@ class OrchestratorApp:
                 msg, msg_type
             )
 
-        ttk.Button(btn_frame, text="🔍 Probar", command=_test_icon,
-                   style="Compact.TButton").pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame, text="🔍 Probar", command=_test_icon).pack(side=tk.LEFT, padx=2)
 
         # ── Botón Probar TODAS las condiciones ──
         def _test_all():
@@ -2223,8 +2226,7 @@ class OrchestratorApp:
                 "success" if overall else "info"
             )
 
-        ttk.Button(btn_frame, text="🧪 Todas", command=_test_all,
-                   style="Compact.TButton").pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame, text="🧪 Todas", command=_test_all).pack(side=tk.LEFT, padx=2)
 
         # ── Reintentos ──
         retry_frame = ttk.LabelFrame(dlg, text="⏳ Reintentos", padding=5)
@@ -2236,15 +2238,15 @@ class OrchestratorApp:
 
         retry_row = ttk.Frame(retry_frame)
         retry_row.pack(fill=tk.X)
-        ttk.Checkbutton(retry_row, text="Reintentar si no se cumple",
+        ctk.CTkCheckBox(retry_row, text="Reintentar si no se cumple",
                         variable=retry_enabled_var).pack(side=tk.LEFT)
-        ttk.Label(retry_row, text="  cada").pack(side=tk.LEFT)
+        ctk.CTkLabel(retry_row, text="  cada").pack(side=tk.LEFT)
         ttk.Spinbox(retry_row, from_=1, to=60, width=4,
                     textvariable=retry_delay_var).pack(side=tk.LEFT)
-        ttk.Label(retry_row, text="seg, hasta").pack(side=tk.LEFT)
+        ctk.CTkLabel(retry_row, text="seg, hasta").pack(side=tk.LEFT)
         ttk.Spinbox(retry_row, from_=1, to=30, width=4,
                     textvariable=retry_count_var).pack(side=tk.LEFT)
-        ttk.Label(retry_row, text="veces").pack(side=tk.LEFT)
+        ctk.CTkLabel(retry_row, text="veces").pack(side=tk.LEFT)
 
         # ── Script de recuperación ──
         fallback_frame = ttk.LabelFrame(dlg, text="🆘 Script de recuperación", padding=5)
@@ -2259,16 +2261,16 @@ class OrchestratorApp:
 
         fb_row1 = ttk.Frame(fallback_frame)
         fb_row1.pack(fill=tk.X)
-        ttk.Checkbutton(fb_row1, text="Si falla",
+        ctk.CTkCheckBox(fb_row1, text="Si falla",
                         variable=fallback_enabled_var).pack(side=tk.LEFT)
         ttk.Spinbox(fb_row1, from_=1, to=30, width=4,
                     textvariable=fallback_threshold_var).pack(side=tk.LEFT)
-        ttk.Label(fb_row1, text="veces seguidas, ejecutar:").pack(side=tk.LEFT)
+        ctk.CTkLabel(fb_row1, text="veces seguidas, ejecutar:").pack(side=tk.LEFT)
 
         # ── Tipo: Exe o Macro ──
         fb_type_row = ttk.Frame(fallback_frame)
         fb_type_row.pack(fill=tk.X, pady=(4, 0))
-        ttk.Label(fb_type_row, text="Tipo:").pack(side=tk.LEFT)
+        ctk.CTkLabel(fb_type_row, text="Tipo:").pack(side=tk.LEFT)
         ttk.Radiobutton(fb_type_row, text="Externo (.exe)", variable=fallback_type_var,
                         value="exe", command=lambda: _toggle_fb_type()).pack(side=tk.LEFT, padx=(4, 8))
         ttk.Radiobutton(fb_type_row, text="Macro", variable=fallback_type_var,
@@ -2277,8 +2279,7 @@ class OrchestratorApp:
         # ── Selector de exe ──
         fb_exe_row = ttk.Frame(fallback_frame)
 
-        fb_script_label = ttk.Label(fb_exe_row, textvariable=fallback_script_var,
-                                    style="Dim.TLabel", width=45, anchor=tk.W)
+        fb_script_label = ctk.CTkLabel(fb_exe_row, textvariable=fallback_script_var, width=280)
         fb_script_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         def _pick_fallback():
@@ -2288,12 +2289,11 @@ class OrchestratorApp:
             if path:
                 fallback_script_var.set(path)
 
-        ttk.Button(fb_exe_row, text="📂 Elegir", command=_pick_fallback,
-                   style="Compact.TButton").pack(side=tk.RIGHT, padx=(4, 0))
+        ctk.CTkButton(fb_exe_row, text="📂 Elegir", command=_pick_fallback).pack(side=tk.RIGHT, padx=(4, 0))
 
         # ── Selector de macro ──
         fb_macro_row = ttk.Frame(fallback_frame)
-        ttk.Label(fb_macro_row, text="Macro:").pack(side=tk.LEFT)
+        ctk.CTkLabel(fb_macro_row, text="Macro:").pack(side=tk.LEFT)
 
         # Recopilar macros de la playlist
         macro_names = ["(ninguna)"]
@@ -2320,10 +2320,10 @@ class OrchestratorApp:
 
         fb_row3 = ttk.Frame(fallback_frame)
         fb_row3.pack(fill=tk.X, pady=(4, 0))
-        ttk.Label(fb_row3, text="Esperar").pack(side=tk.LEFT)
+        ctk.CTkLabel(fb_row3, text="Esperar").pack(side=tk.LEFT)
         ttk.Spinbox(fb_row3, from_=0, to=999, width=5,
                     textvariable=fallback_delay_var).pack(side=tk.LEFT, padx=3)
-        ttk.Label(fb_row3, text="s tras recuperación antes de continuar").pack(side=tk.LEFT)
+        ctk.CTkLabel(fb_row3, text="s tras recuperación antes de continuar").pack(side=tk.LEFT)
 
         # ── Guardar / Cancelar ──
         bottom = ttk.Frame(dlg)
@@ -2380,12 +2380,9 @@ class OrchestratorApp:
                 cond_copy["items"].clear()
                 _refresh_cond_list()
 
-        ttk.Button(bottom, text="🗑️ Limpiar todo", command=_clear_all,
-                   style="Compact.TButton").pack(side=tk.LEFT, padx=2)
-        ttk.Button(bottom, text="Cancelar", command=dlg.destroy,
-                   style="Compact.TButton").pack(side=tk.RIGHT, padx=2)
-        ttk.Button(bottom, text="✅ Guardar", command=_save,
-                   style="Compact.TButton").pack(side=tk.RIGHT, padx=2)
+        ctk.CTkButton(bottom, text="🗑️ Limpiar todo", command=_clear_all).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(bottom, text="Cancelar", command=dlg.destroy).pack(side=tk.RIGHT, padx=2)
+        ctk.CTkButton(bottom, text="✅ Guardar", command=_save).pack(side=tk.RIGHT, padx=2)
 
         dlg.wait_window()
 
@@ -2402,8 +2399,7 @@ class OrchestratorApp:
 
         win = ctk.CTkToplevel(self.root, fg_color=DARK_COLORS["bg"])
         win.title("Agregar script")
-        win.geometry("360x460")
-        win.resizable(False, False)
+        win.minsize(300, 380)
         win.transient(self.root)
         win.grab_set()
         win.lift()
@@ -2411,44 +2407,41 @@ class OrchestratorApp:
         # Dark titlebar
         win.after(50, lambda: _apply_dark_titlebar(win, retries=3))
 
-        # Center on parent
-        win.update_idletasks()
-        pw, ph = self.root.winfo_width(), self.root.winfo_height()
-        px, py = self.root.winfo_x(), self.root.winfo_y()
-        dw, dh = win.winfo_width(), win.winfo_height()
-        win.geometry(f"360x460+{px + (pw - dw)//2}+{py + (ph - dh)//2}")
+        # Restore saved geometry or default + center
+        self._restore_win_geometry(win, "script_editor_geometry", "360x460")
+        self._bind_geo_save(win, "script_editor_geometry")
 
         form = ttk.Frame(win, padding=10)
         form.pack(fill=tk.BOTH, expand=True)
 
-        ttk.Label(form, text=f"Script: {os.path.basename(path)}", style="Dim.TLabel").pack(pady=(0, 10))
+        ctk.CTkLabel(form, text=f"Script: {os.path.basename(path)}").pack(pady=(0, 10))
 
         row1 = ttk.Frame(form)
         row1.pack(fill=tk.X, pady=(0, 6))
-        ttk.Label(row1, text="Repeticiones:", style="Compact.TLabel").pack(side=tk.LEFT)
+        ctk.CTkLabel(row1, text="Repeticiones:").pack(side=tk.LEFT)
         reps_var = tk.IntVar(value=1)
         ttk.Spinbox(row1, from_=1, to=999, textvariable=reps_var, width=8).pack(side=tk.RIGHT)
 
         row2 = ttk.Frame(form)
         row2.pack(fill=tk.X, pady=(0, 6))
-        ttk.Label(row2, text="Duración (s):", style="Compact.TLabel").pack(side=tk.LEFT)
+        ctk.CTkLabel(row2, text="Duración (s):").pack(side=tk.LEFT)
         dur_var = tk.IntVar(value=10)
         ttk.Spinbox(row2, from_=1, to=9999, textvariable=dur_var, width=8).pack(side=tk.RIGHT)
 
         row3 = ttk.Frame(form)
         row3.pack(fill=tk.X, pady=(0, 6))
-        ttk.Label(row3, text="Pausa entre reps (s):", style="Compact.TLabel").pack(side=tk.LEFT)
+        ctk.CTkLabel(row3, text="Pausa entre reps (s):").pack(side=tk.LEFT)
         pause_var = tk.IntVar(value=0)
         ttk.Spinbox(row3, from_=0, to=9999, textvariable=pause_var, width=8).pack(side=tk.RIGHT)
 
         # ── Time preview ──
-        time_preview = ttk.Label(form, text="Tiempo: 10s", style="Dim.TLabel")
+        time_preview = ctk.CTkLabel(form, text="Tiempo: 10s")
         time_preview.pack(pady=(8, 0))
 
         def update_preview(*args):
             total = (dur_var.get() + pause_var.get()) * reps_var.get() - pause_var.get()
             total = max(total, 0)
-            time_preview.config(text=f"Tiempo: {format_time(total)}")
+            time_preview.configure(text=f"Tiempo: {format_time(total)}")
 
         reps_var.trace_add("write", update_preview)
         dur_var.trace_add("write", update_preview)
@@ -2468,7 +2461,7 @@ class OrchestratorApp:
             self._refresh_list()
             win.destroy()
 
-        ttk.Button(form, text="Guardar", command=save, style="Compact.TButton").pack()
+        ctk.CTkButton(form, text="Guardar", command=save).pack()
 
     def _add_macro(self):
         """Abre el editor de macros para grabar/editar una secuencia."""
@@ -2491,7 +2484,7 @@ class OrchestratorApp:
             self.playlist.append(item)
             self._refresh_list()
 
-        MacroEditorWindow(self.root, on_save=on_save)
+        MacroEditorWindow(self.root, on_save=on_save, settings=self.settings)
 
     def _edit_macro(self, idx):
         """Abre el editor de macros para editar una macro existente."""
@@ -2511,7 +2504,8 @@ class OrchestratorApp:
             self._refresh_list()
 
         MacroEditorWindow(self.root, on_save=on_save,
-                          initial_actions=actions, initial_name=name)
+                          initial_actions=actions, initial_name=name,
+                          settings=self.settings)
 
     def _edit_script(self):
         sel = self.tree.selection()
@@ -2532,8 +2526,7 @@ class OrchestratorApp:
 
         win = ctk.CTkToplevel(self.root, fg_color=DARK_COLORS["bg"])
         win.title("Editar script")
-        win.geometry("360x460")
-        win.resizable(False, False)
+        win.minsize(300, 380)
         win.transient(self.root)
         win.grab_set()
         win.lift()
@@ -2541,46 +2534,43 @@ class OrchestratorApp:
         # Dark titlebar
         win.after(50, lambda: _apply_dark_titlebar(win, retries=3))
 
-        # Center on parent
-        win.update_idletasks()
-        pw, ph = self.root.winfo_width(), self.root.winfo_height()
-        px, py = self.root.winfo_x(), self.root.winfo_y()
-        dw, dh = win.winfo_width(), win.winfo_height()
-        win.geometry(f"360x460+{px + (pw - dw)//2}+{py + (ph - dh)//2}")
+        # Restore saved geometry or default + center
+        self._restore_win_geometry(win, "script_editor_geometry", "360x460")
+        self._bind_geo_save(win, "script_editor_geometry")
 
         form = ttk.Frame(win, padding=10)
         form.pack(fill=tk.BOTH, expand=True)
 
-        ttk.Label(form, text=f"Script: {os.path.basename(item['path'])}", style="Dim.TLabel").pack(pady=(0, 10))
+        ctk.CTkLabel(form, text=f"Script: {os.path.basename(item['path'])}").pack(pady=(0, 10))
 
         row1 = ttk.Frame(form)
         row1.pack(fill=tk.X, pady=(0, 6))
-        ttk.Label(row1, text="Repeticiones:", style="Compact.TLabel").pack(side=tk.LEFT)
+        ctk.CTkLabel(row1, text="Repeticiones:").pack(side=tk.LEFT)
         reps_var = tk.IntVar(value=item["repetitions"])
         ttk.Spinbox(row1, from_=1, to=999, textvariable=reps_var, width=8).pack(side=tk.RIGHT)
 
         row2 = ttk.Frame(form)
         row2.pack(fill=tk.X, pady=(0, 6))
-        ttk.Label(row2, text="Duración (s):", style="Compact.TLabel").pack(side=tk.LEFT)
+        ctk.CTkLabel(row2, text="Duración (s):").pack(side=tk.LEFT)
         dur_var = tk.IntVar(value=item["duration"])
         ttk.Spinbox(row2, from_=1, to=9999, textvariable=dur_var, width=8).pack(side=tk.RIGHT)
 
         row3 = ttk.Frame(form)
         row3.pack(fill=tk.X, pady=(0, 6))
-        ttk.Label(row3, text="Pausa entre reps (s):", style="Compact.TLabel").pack(side=tk.LEFT)
+        ctk.CTkLabel(row3, text="Pausa entre reps (s):").pack(side=tk.LEFT)
         pause_var = tk.IntVar(value=item["pause"])
         ttk.Spinbox(row3, from_=0, to=9999, textvariable=pause_var, width=8).pack(side=tk.RIGHT)
 
         # ── Time preview ──
         initial_total = (item["duration"] + item["pause"]) * item["repetitions"] - item["pause"]
         initial_total = max(initial_total, 0)
-        time_preview = ttk.Label(form, text=f"Tiempo: {format_time(initial_total)}", style="Dim.TLabel")
+        time_preview = ctk.CTkLabel(form, text=f"Tiempo: {format_time(initial_total)}")
         time_preview.pack(pady=(8, 0))
 
         def update_preview(*args):
             total = (dur_var.get() + pause_var.get()) * reps_var.get() - pause_var.get()
             total = max(total, 0)
-            time_preview.config(text=f"Tiempo: {format_time(total)}")
+            time_preview.configure(text=f"Tiempo: {format_time(total)}")
 
         reps_var.trace_add("write", update_preview)
         dur_var.trace_add("write", update_preview)
@@ -2599,7 +2589,7 @@ class OrchestratorApp:
             self._refresh_list()
             win.destroy()
 
-        ttk.Button(form, text="Guardar cambios", command=save, style="Compact.TButton").pack()
+        ctk.CTkButton(form, text="Guardar cambios", command=save).pack()
 
     def _remove_script(self):
         sel = self.tree.selection()
@@ -3021,10 +3011,10 @@ class OrchestratorApp:
 
         # Support multi-line labels
         for line in label.split("\n"):
-            ttk.Label(form, text=line, style="Compact.TLabel").pack(anchor=tk.W)
-        ttk.Label(form, text="", style="Compact.TLabel").pack()  # spacer
+            ctk.CTkLabel(form, text=line).pack(anchor=tk.W)
+        ctk.CTkLabel(form, text="").pack()  # spacer
         name_var = tk.StringVar()
-        entry = ttk.Entry(form, textvariable=name_var, width=30)
+        entry = ctk.CTkEntry(form, textvariable=name_var, width=30)
         entry.pack(fill=tk.X, pady=(0, 8))
         entry.focus_set()
 
@@ -3033,11 +3023,53 @@ class OrchestratorApp:
             win.destroy()
 
         entry.bind("<Return>", lambda e: save())
-        ttk.Button(form, text="Guardar", command=save, style="Compact.TButton").pack()
+        ctk.CTkButton(form, text="Guardar", command=save).pack()
 
     # ═══════════════════════════════════════════════════════════════
     # EXECUTION
     # ═══════════════════════════════════════════════════════════════
+
+    def _restore_win_geometry(self, win, settings_key, default_size, parent=None):
+        """Restore saved geometry or center with default size on parent."""
+        saved = self.settings.get(settings_key, "")
+        if saved:
+            try:
+                win.geometry(saved)
+                return
+            except tk.TclError:
+                pass
+        # Default: set size and center on parent or screen
+        win.geometry(default_size)
+        win.update_idletasks()
+        if parent is None:
+            parent = self.root
+        pw, ph = parent.winfo_width(), parent.winfo_height()
+        px, py = parent.winfo_x(), parent.winfo_y()
+        dw, dh = win.winfo_width(), win.winfo_height()
+        # Fallback to screen center if parent has no real dimensions yet
+        if pw < 100 or ph < 100:
+            sw = win.winfo_screenwidth()
+            sh = win.winfo_screenheight()
+            win.geometry(f"{default_size}+{(sw - dw)//2}+{(sh - dh)//2}")
+        else:
+            win.geometry(f"{default_size}+{px + (pw - dw)//2}+{py + (ph - dh)//2}")
+
+    def _bind_geo_save(self, win, settings_key):
+        """Save window geometry on close (WM_DELETE_WINDOW + Destroy)."""
+        def _save_and_destroy():
+            try:
+                self.settings[settings_key] = win.geometry()
+            except tk.TclError:
+                pass
+            win.destroy()
+        win.protocol("WM_DELETE_WINDOW", _save_and_destroy)
+        # Also save on any destroy (e.g., Cancel button via destroy())
+        def _on_destroy(_event=None):
+            try:
+                self.settings[settings_key] = win.geometry()
+            except tk.TclError:
+                pass
+        win.bind("<Destroy>", _on_destroy, add="+")
 
     def _gather_settings(self):
         settings = {
@@ -3243,11 +3275,11 @@ class OrchestratorApp:
         self.launch_event.set()
 
     def _update_progress(self, value, maximum):
-        """Update progress bar and percentage label."""
-        self.progress["maximum"] = maximum
-        self.progress["value"] = value
+        """Update progress bar and percentage label. CTk uses 0.0-1.0."""
+        self._progress_max = maximum
+        self.progress.set(value / maximum if maximum > 0 else 0)
         pct = (value / maximum * 100) if maximum > 0 else 0
-        self.progress_pct_label.config(text=f"{int(pct)}%")
+        self.progress_pct_label.configure(text=f"{int(pct)}%")
 
     def _poll_timer(self):
         """Update progress bar and countdown based on real elapsed time."""
@@ -3256,7 +3288,7 @@ class OrchestratorApp:
         elapsed = time.time() - self._exec_start_time
         if self._exec_total_time is not None:
             remaining = max(self._exec_total_time - elapsed, 0)
-            self.countdown_label.config(text=f"⏱️ {format_time(int(remaining))}")
+            self.countdown_label.configure(text=f"⏱️ {format_time(int(remaining))}")
             prog = min(int(elapsed), self._exec_total_time)
             self._update_progress(prog, self._exec_total_time)
 
@@ -3273,7 +3305,7 @@ class OrchestratorApp:
             elapsed = time.time() - self._exec_start_time
             item_elapsed = time.time() - self._cur_item_start_time
             item_remaining = max(self._cur_item_total_time - item_elapsed, 0)
-            self.countdown_label.config(
+            self.countdown_label.configure(
                 text=f"⏱️ -{format_time(int(item_remaining))} │ {format_time(int(elapsed))}"
             )
             if self.mini_bar is not None and self.mini_bar.is_visible():
@@ -3303,7 +3335,7 @@ class OrchestratorApp:
 
     def _cb_start_loop(self, current, max_loops, total_global):
         if max_loops is None:
-            total_per_loop = self.progress["maximum"]
+            total_per_loop = getattr(self, '_progress_max', self._exec_total_time or 1)
             self._update_progress(0, total_per_loop)
         if max_loops is None:
             status_text = f"EJECUTANDO | Loop {current} (∞)"

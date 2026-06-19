@@ -19,6 +19,10 @@ DEFAULT_SETTINGS = {
     "menu_bar_visible": True,
     # ── Group collapse state ──
     "collapsed_groups": [],
+    # ── Window geometries (persisted positions/sizes) ──
+    "macro_editor_geometry": "",
+    "condition_editor_geometry": "",
+    "script_editor_geometry": "",
 }
 
 

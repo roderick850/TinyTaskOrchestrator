@@ -819,29 +819,34 @@ class OrchestratorApp:
             self.tree.yview_scroll(int(-1 * (event.delta / 120)), "units")
         self.tree.bind("<MouseWheel>", _on_mousewheel)
 
-        # ===== Frame botones (compacto) =====
-        btn_frame = ttk.Frame(self.root)
-        btn_frame.pack(fill=tk.X, padx=5, pady=(0, 3))
+        # ===== Frame botones — fila A =====
+        btn_frame_a = ttk.Frame(self.root)
+        btn_frame_a.pack(fill=tk.X, padx=5, pady=(0, 1))
 
-        ctk.CTkButton(btn_frame, text="🎬 Macro", command=self._add_macro).pack(
+        ctk.CTkButton(btn_frame_a, text="🎬 Macro", command=self._add_macro).pack(
             side=tk.LEFT, padx=2
         )
-        ctk.CTkButton(btn_frame, text="➕ Agregar", command=self._add_script).pack(
+        ctk.CTkButton(btn_frame_a, text="➕ Agregar", command=self._add_script).pack(
             side=tk.LEFT, padx=2
         )
-        ctk.CTkButton(btn_frame, text="✏️ Editar", command=self._edit_script).pack(
+        ctk.CTkButton(btn_frame_a, text="✏️ Editar", command=self._edit_script).pack(
             side=tk.LEFT, padx=2
         )
-        ctk.CTkButton(btn_frame, text="📋 Clonar", command=self._clone_script).pack(
+        ctk.CTkButton(btn_frame_a, text="📋 Clonar", command=self._clone_script).pack(
             side=tk.LEFT, padx=2
         )
-        ctk.CTkButton(btn_frame, text="🗑️ Quitar", command=self._remove_script).pack(
+        ctk.CTkButton(btn_frame_a, text="🗑️ Quitar", command=self._remove_script).pack(
             side=tk.LEFT, padx=2
         )
-        ctk.CTkButton(btn_frame, text="⬆", command=self._move_up, width=30).pack(
-            side=tk.LEFT, padx=(8, 1)
+
+        # ===== Frame botones — fila B (movimiento) =====
+        btn_frame_b = ttk.Frame(self.root)
+        btn_frame_b.pack(fill=tk.X, padx=5, pady=(0, 3))
+
+        ctk.CTkButton(btn_frame_b, text="⬆", command=self._move_up, width=30).pack(
+            side=tk.LEFT, padx=(2, 1)
         )
-        ctk.CTkButton(btn_frame, text="⬇", command=self._move_down, width=30).pack(
+        ctk.CTkButton(btn_frame_b, text="⬇", command=self._move_down, width=30).pack(
             side=tk.LEFT, padx=1
         )
 
@@ -1750,9 +1755,9 @@ class OrchestratorApp:
 
         tree.bind("<ButtonRelease-1>", _on_tree_click)
 
-        # ── Botones de acción ──
-        btn_frame = ttk.Frame(dlg)
-        btn_frame.pack(fill=tk.X, **pad)
+        # ── Botones de acción (fila A) ──
+        btn_frame_a = ttk.Frame(dlg)
+        btn_frame_a.pack(fill=tk.X, **pad)
 
         def _add_condition():
             """Abre captura de pantalla — si hay múltiples monitores, pregunta cuál usar."""
@@ -1936,10 +1941,10 @@ class OrchestratorApp:
                 entry.bind("<Return>", lambda e: _save_label())
                 ctk.CTkButton(lbl_win, text="Guardar", command=_save_label).pack()
 
-        ctk.CTkButton(btn_frame, text="➕ Agregar", command=_add_condition).pack(side=tk.LEFT, padx=2)
-        ctk.CTkButton(btn_frame, text="🗑️ Quitar", command=_remove_condition).pack(side=tk.LEFT, padx=2)
-        ctk.CTkButton(btn_frame, text="🔄 Cambiar tipo", command=_toggle_type).pack(side=tk.LEFT, padx=2)
-        ctk.CTkButton(btn_frame, text="🏷️ Etiqueta", command=_edit_label).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame_a, text="➕ Agregar", command=_add_condition).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame_a, text="🗑️ Quitar", command=_remove_condition).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame_a, text="🔄 Cambiar tipo", command=_toggle_type).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame_a, text="🏷️ Etiqueta", command=_edit_label).pack(side=tk.LEFT, padx=2)
 
         def _edit_threshold():
             """Editar la tolerancia de la condición seleccionada."""
@@ -1974,7 +1979,11 @@ class OrchestratorApp:
                 pdy = dlg.winfo_rooty() + (dlg.winfo_height() - thr_win.winfo_height()) // 2
                 thr_win.geometry(f"+{pdx}+{pdy}")
 
-        ctk.CTkButton(btn_frame, text="🎯 Tolerancia", command=_edit_threshold).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame_a, text="🎯 Tolerancia", command=_edit_threshold).pack(side=tk.LEFT, padx=2)
+
+        # ── Botones de acción (fila B) ──
+        btn_frame_b = ttk.Frame(dlg)
+        btn_frame_b.pack(fill=tk.X, **pad)
 
         # ── Botón Muestreo ──
         def _edit_sampling():
@@ -2022,7 +2031,7 @@ class OrchestratorApp:
             pdy = dlg.winfo_rooty() + (dlg.winfo_height() - smp_win.winfo_height()) // 2
             smp_win.geometry(f"+{pdx}+{pdy}")
 
-        ctk.CTkButton(btn_frame, text="📊 Muestreo", command=_edit_sampling).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame_b, text="📊 Muestreo", command=_edit_sampling).pack(side=tk.LEFT, padx=2)
 
         def _preview_icon():
             """Abrir la imagen del icono seleccionado con el visor del sistema."""
@@ -2038,7 +2047,7 @@ class OrchestratorApp:
                     self._dark_dialog("Icono no encontrado",
                         f"El archivo no existe:\n{ipath}", "warning")
 
-        ctk.CTkButton(btn_frame, text="👁️ Ver", command=_preview_icon).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame_b, text="👁️ Ver", command=_preview_icon).pack(side=tk.LEFT, padx=2)
 
         # ── Botón Probar (diagnóstico) ──
         def _test_icon():
@@ -2139,7 +2148,7 @@ class OrchestratorApp:
                 msg, msg_type
             )
 
-        ctk.CTkButton(btn_frame, text="🔍 Probar", command=_test_icon).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame_b, text="🔍 Probar", command=_test_icon).pack(side=tk.LEFT, padx=2)
 
         # ── Botón Probar TODAS las condiciones ──
         def _test_all():
@@ -2226,7 +2235,7 @@ class OrchestratorApp:
                 "success" if overall else "info"
             )
 
-        ctk.CTkButton(btn_frame, text="🧪 Todas", command=_test_all).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(btn_frame_b, text="🧪 Todas", command=_test_all).pack(side=tk.LEFT, padx=2)
 
         # ── Reintentos ──
         retry_frame = ttk.LabelFrame(dlg, text="⏳ Reintentos", padding=5)

@@ -177,19 +177,24 @@ class MacroEditorWindow(ctk.CTkToplevel):
         ctk.CTkLabel(top_name, text="Nombre:").pack(side=tk.LEFT, padx=(0, 6))
         ctk.CTkEntry(top_name, textvariable=self.macro_name, width=300).pack(side=tk.LEFT, fill=tk.X, expand=True)
 
-        # ── Row 2: botones de acción ──
-        top_btns = ttk.Frame(self, padding=(8, 2, 8, 4))
-        top_btns.pack(fill=tk.X)
+        # ── Row 2: botones de acción (fila A) ──
+        top_btns_a = ttk.Frame(self, padding=(8, 2, 8, 1))
+        top_btns_a.pack(fill=tk.X)
 
-        self._btn_rec = ctk.CTkButton(top_btns, text="⏺️ Grabar", command=self._toggle_record)
+        self._btn_rec = ctk.CTkButton(top_btns_a, text="⏺️ Grabar", command=self._toggle_record)
         self._btn_rec.pack(side=tk.LEFT, padx=2)
 
-        self._btn_play = ctk.CTkButton(top_btns, text="▶️ Probar", command=self._play_macro)
+        self._btn_play = ctk.CTkButton(top_btns_a, text="▶️ Probar", command=self._play_macro)
         self._btn_play.pack(side=tk.LEFT, padx=2)
 
-        ctk.CTkButton(top_btns, text="➕ Añadir Tecla", command=self._add_key).pack(side=tk.LEFT, padx=2)
-        ctk.CTkButton(top_btns, text="➕ Añadir Click", command=self._add_click).pack(side=tk.LEFT, padx=2)
-        ctk.CTkButton(top_btns, text="➕ Añadir Espera", command=self._add_wait).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(top_btns_a, text="➕ Añadir Tecla", command=self._add_key).pack(side=tk.LEFT, padx=2)
+
+        # ── Row 2b: botones de acción (fila B) ──
+        top_btns_b = ttk.Frame(self, padding=(8, 0, 8, 4))
+        top_btns_b.pack(fill=tk.X)
+
+        ctk.CTkButton(top_btns_b, text="➕ Añadir Click", command=self._add_click).pack(side=tk.LEFT, padx=2)
+        ctk.CTkButton(top_btns_b, text="➕ Añadir Espera", command=self._add_wait).pack(side=tk.LEFT, padx=2)
 
         # ── Status ──
         status_frame = ttk.Frame(self, padding=(8, 0, 8, 4))

@@ -585,14 +585,21 @@ class OrchestratorApp:
             ThemeManager.theme["CTkEntry"]["fg_color"] = ["#212121", "#1a1a1a"]
             ThemeManager.theme["CTkEntry"]["text_color"] = "#e0e0e0"
             ThemeManager.theme["CTkEntry"]["border_color"] = ["#3a3a3a", "#2a2a2a"]
-            # Checkboxes
+            # Checkboxes y RadioButtons — tema oscuro integrado
             ThemeManager.theme["CTkCheckBox"]["corner_radius"] = 3
             ThemeManager.theme["CTkCheckBox"]["border_width"] = 2
             ThemeManager.theme["CTkCheckBox"]["fg_color"] = ["#1f538d", "#14375e"]
-            ThemeManager.theme["CTkCheckBox"]["border_color"] = ["#3a3a3a", "#2a2a2a"]
+            ThemeManager.theme["CTkCheckBox"]["border_color"] = ["#505050", "#404040"]
             ThemeManager.theme["CTkCheckBox"]["checkmark_color"] = "#ffffff"
             ThemeManager.theme["CTkCheckBox"]["text_color"] = "#e0e0e0"
             ThemeManager.theme["CTkCheckBox"]["hover_color"] = ["#2a2a2a", "#1a1a1a"]
+            # RadioButtons
+            ThemeManager.theme["CTkRadioButton"]["corner_radius"] = 3
+            ThemeManager.theme["CTkRadioButton"]["border_width"] = 2
+            ThemeManager.theme["CTkRadioButton"]["fg_color"] = ["#1f538d", "#14375e"]
+            ThemeManager.theme["CTkRadioButton"]["border_color"] = ["#505050", "#404040"]
+            ThemeManager.theme["CTkRadioButton"]["text_color"] = "#e0e0e0"
+            ThemeManager.theme["CTkRadioButton"]["hover_color"] = ["#2a2a2a", "#1a1a1a"]
             # ProgressBar
             ThemeManager.theme["CTkProgressBar"]["corner_radius"] = 2
             ThemeManager.theme["CTkProgressBar"]["fg_color"] = ["#1f538d", "#14375e"]
@@ -1664,9 +1671,9 @@ class OrchestratorApp:
         ru_stop_row = ttk.Frame(ru_frame)
         ru_stop_row.pack(fill=tk.X)
         ctk.CTkLabel(ru_stop_row, text="Detener al:").pack(side=tk.LEFT)
-        ttk.Radiobutton(ru_stop_row, text="Encontrar", variable=ru_stop_var,
+        ctk.CTkRadioButton(ru_stop_row, text="Encontrar", variable=ru_stop_var,
                         value="match").pack(side=tk.LEFT, padx=(4, 0))
-        ttk.Radiobutton(ru_stop_row, text="Desaparecer", variable=ru_stop_var,
+        ctk.CTkRadioButton(ru_stop_row, text="Desaparecer", variable=ru_stop_var,
                         value="no_match").pack(side=tk.LEFT, padx=2)
 
         ru_max_var = tk.IntVar(value=cond_copy["repeat"]["max_iterations"])
@@ -2280,9 +2287,9 @@ class OrchestratorApp:
         fb_type_row = ttk.Frame(fallback_frame)
         fb_type_row.pack(fill=tk.X, pady=(4, 0))
         ctk.CTkLabel(fb_type_row, text="Tipo:").pack(side=tk.LEFT)
-        ttk.Radiobutton(fb_type_row, text="Externo (.exe)", variable=fallback_type_var,
+        ctk.CTkRadioButton(fb_type_row, text="Externo (.exe)", variable=fallback_type_var,
                         value="exe", command=lambda: _toggle_fb_type()).pack(side=tk.LEFT, padx=(4, 8))
-        ttk.Radiobutton(fb_type_row, text="Macro", variable=fallback_type_var,
+        ctk.CTkRadioButton(fb_type_row, text="Macro", variable=fallback_type_var,
                         value="macro", command=lambda: _toggle_fb_type()).pack(side=tk.LEFT)
 
         # ── Selector de exe ──

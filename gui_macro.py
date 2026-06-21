@@ -717,8 +717,8 @@ class _WaitDialog(ctk.CTkToplevel):
         self._pos_var = tk.StringVar(value="end")
         rb_frame = ttk.Frame(frm)
         rb_frame.pack(fill=tk.X)
-        ttk.Radiobutton(rb_frame, text="Al inicio (antes de todo)", variable=self._pos_var, value="start").pack(anchor="w")
-        ttk.Radiobutton(rb_frame, text="Al final (después de todo)", variable=self._pos_var, value="end").pack(anchor="w")
+        ctk.CTkRadioButton(rb_frame, text="Al inicio (antes de todo)", variable=self._pos_var, value="start").pack(anchor="w")
+        ctk.CTkRadioButton(rb_frame, text="Al final (después de todo)", variable=self._pos_var, value="end").pack(anchor="w")
 
         btn_frame = ttk.Frame(frm)
         btn_frame.pack(fill=tk.X, pady=(12, 0))

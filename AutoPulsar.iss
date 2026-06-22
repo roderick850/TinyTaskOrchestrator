@@ -2,7 +2,7 @@
 ; Compila con: ISCC.exe AutoPulsar.iss
 
 #define MyAppName "AutoPulsar"
-#define MyAppVersion "0.1.0-beta"
+#define MyAppVersion "1.2.1"
 #define MyAppPublisher "Roderick"
 #define MyAppURL "https://github.com/roderick850/AutoPulsar"
 #define MyAppExeName "AutoPulsar.exe"

@@ -513,7 +513,7 @@ class OrchestratorApp:
     def _menu_about(self):
         """Mostrar diálogo Acerca de."""
         msg = (
-            "AutoPulsar v0.1.0-beta\n\n"
+            "AutoPulsar v1.2.1\n\n"
             "Grabador y reproductor de macros\n"
             "de teclado y ratón con condiciones visuales.\n\n"
             "Macros nativas — graba, edita y reproduce\n"
